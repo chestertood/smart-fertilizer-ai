@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+
+# Runtime data (SQLite DB + user config) — not source
+data/
+
+# Editor
+.vscode/
+.claude/settings.local.json

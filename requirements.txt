@@ -1,0 +1,27 @@
+# ===========================================================================
+# Smart Fertilizer — Python dependencies
+# Install with:  pip install -r requirements.txt
+# Tested on Python 3.12
+# ===========================================================================
+
+# --- Core (required on every platform) -------------------------------------
+# UI framework
+flet==0.85.1
+
+# Anthropic Claude API (LLM advisor)
+anthropic
+
+# Loads ANTHROPIC_API_KEY from the .env file
+python-dotenv
+
+# Note: data logging (sqlite3), JSON config, asyncio, etc. all use the
+# Python standard library — no extra packages needed.
+
+# --- Raspberry Pi / Hardware (install ONLY on the Pi) ----------------------
+# These are skipped on Windows/dev (the code falls back to simulated sensors
+# and pumps). Uncomment on the Pi, or:  pip install -r requirements.txt
+#
+# smbus2                          # Atlas Scientific EZO EC/pH over I2C
+# adafruit-circuitpython-dht      # DHT22 temperature/humidity
+# adafruit-blinka                 # CircuitPython 'board' support on the Pi
+# gpiozero                        # Relay-driven dosing pumps (RelayPump)
