@@ -8,3 +8,8 @@ data/
 # Editor
 .vscode/
 .claude/settings.local.json
+
+# PDF conversion staging — raw source PDFs + unedited md dumps, not final
+# knowledge (may be large binaries and/or copyrighted source docs)
+knowledge/_raw_pdf/
+knowledge/_raw/
