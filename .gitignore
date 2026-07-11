@@ -1,10 +1,24 @@
+# Secrets — never commit. Copy .env.example → .env and add your key.
 .env
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
 
-# Runtime data (SQLite DB + user config) — not source
+# Runtime data (SQLite DB + user config + logs) — not source
 data/
+*.log
 
-# Editor
+# PyInstaller / flet pack build output
+build/
+dist/
+*.spec
+
+# Editor / tooling
 .vscode/
-.claude/settings.local.json
+
+# Claude Code local state, worktrees, and machine-local settings
+.claude/

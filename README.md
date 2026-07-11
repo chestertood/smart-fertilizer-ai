@@ -19,13 +19,14 @@ Fertigation mistakes are hard to undo — over-dosing can damage or kill a crop.
 - **Live Dashboard** — real-time EC / pH / Temperature / Humidity cards with status coloring (Normal / Warning / Too High-Low) and online/offline connectivity indicator.
 - **Parameters page** — one screen to manually configure:
   - **Setpoints** per crop profile (target min/max per sensor), with a live status dot as you edit.
+  - **Growth stages** — an ordered crop lifecycle (e.g. seedling → growing → mature), each stage with its own duration and target ranges; the active stage's targets drive the dashboard.
   - **Auto-dose rules** (e.g. "if EC < 1.8 → dose Nutrient A 10ml") — stored and editable now; the automatic execution engine is a planned follow-up.
   - **Manual dosing** — trigger any pump on demand with a safety-clamped amount.
   - **Calibration** — per-pump max dose / throughput, per-sensor offsets.
   - A sticky **unsaved-changes bar** (Save / Reset) keeps edits explicit before they're persisted.
-- **LLM Advisor** — sends current readings + active crop profile to Claude via structured tool-use, gets back concrete dosing actions with reasoning, and dispenses only on manual approval.
-- **History** — logged sensor trends and a full dosing event log (manual vs. LLM-sourced).
-- **Settings** — control mode (Manual / Advisor), crop profile selection, API key status.
+- **AI chat assistant** — a floating chat widget (available on every page) backed by Claude. Answers questions about live readings and fertigation, and can **propose** dosing actions, target parameters, or a full growth-stage plan via structured tool-use — always as an approve-first card, never auto-applied. Accepts image/PDF/text attachments (vision + document input).
+- **History** — logged sensor trends and a full dosing event log (manual vs. AI-sourced).
+- **Settings** — control mode, crop profile selection, **Claude model picker** (Opus 4.8 / Sonnet 5 / Haiku 4.5) with a running cost estimate, **language toggle (English / ไทย)**, light/dark theme, and API key status.
 
 ## Architecture
 
@@ -33,25 +34,27 @@ Fertigation mistakes are hard to undo — over-dosing can damage or kill a crop.
 main.py                     # Entry point — desktop window or web view
 app/
   app.py                    # Wires views, nav rail, sensor/actuator polling loops
+  theme.py                  # Light/dark theme tokens
   components/
     app_bar.py               # Top bar with control-mode indicator
-    nav_rail.py               # Side navigation (Dashboard/Parameters/Advisor/History/Settings)
+    nav_rail.py               # Side navigation (Dashboard/Parameters/History/Settings)
     sensor_card.py             # Reusable live sensor readout card
+    chat_widget.py             # Floating Claude chat assistant (approve-first proposals)
   views/
     dashboard.py              # Live sensor grid
-    parameters.py              # Manual setpoints / rules / dosing / calibration
-    advisor.py                 # LLM-driven recommend → approve → dose flow
+    parameters.py              # Setpoints / growth stages / rules / dosing / calibration
     history.py                 # Trends + dosing log
-    settings_view.py           # Mode / profile / API key status
+    settings_view.py           # Mode / profile / model / language / API key status
   services/
     hardware.py               # Sensor abstraction: simulated + Atlas Scientific EZO (I2C) + DHT22
     actuators.py               # Pump abstraction: simulated + GPIO relay-driven dosing
     database.py                # SQLite logging (readings + dosing_events)
-    llm_agent.py                # Claude tool-use integration for dosing recommendations
+    llm_agent.py                # Claude tool-use integration (recommend / chat / set params / stages)
 config/
   sensors.py                 # Sensor metadata + status thresholds
-  profiles.py                 # Crop profiles, shared AppState
+  profiles.py                 # Crop profiles, growth stages, shared AppState
   store.py                   # JSON persistence for user-editable config
+  i18n.py                    # English / Thai UI string tables
 ```
 
 ### Simulation-first hardware design
@@ -71,11 +74,14 @@ cd smart-fertilizer-ai
 pip install -r requirements.txt
 ```
 
-Create a `.env` file with your Anthropic API key (only needed for the LLM Advisor):
+Copy the example env file and add your Anthropic API key (only needed for the AI chat / recommendations). Get a key from the [Anthropic Console](https://console.anthropic.com/):
 
+```bash
+cp .env.example .env
+# then edit .env and set ANTHROPIC_API_KEY=sk-ant-...
 ```
-ANTHROPIC_API_KEY=your-key-here
-```
+
+`.env` is git-ignored — never commit a real key.
 
 Run it:
 
@@ -106,6 +112,7 @@ Uncomment the hardware section in `requirements.txt` (`smbus2`, `adafruit-circui
 - [ ] ML-based trend prediction / anomaly detection on logged sensor history
 - [ ] Sensor calibration offsets applied at read-time
 - [ ] Dose rate-limiting / cooldown safety window
+- [ ] Telegram bridge — chat with the assistant and get alerts off-device (assistant logic in `llm_agent.py` is kept UI-independent for this)
 
 ## License
 

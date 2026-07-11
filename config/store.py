@@ -9,16 +9,23 @@ avoid a circular import with config.profiles.
 """
 
 import os
+import sys
 import copy
 import json
 import logging
 
 logger = logging.getLogger(__name__)
 
-_DATA_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data",
-)
+# Writable data dir. When frozen by `flet pack`, __file__ is inside the temp
+# _MEIPASS extraction dir (wiped on exit) — use the exe's folder instead so
+# config survives a restart.
+if getattr(sys, "frozen", False):
+    _DATA_DIR = os.path.join(os.path.dirname(sys.executable), "data")
+else:
+    _DATA_DIR = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "data",
+    )
 _CONFIG_PATH = os.path.join(_DATA_DIR, "app_config.json")
 
 
@@ -33,11 +40,27 @@ def _defaults() -> dict:
     }
     return {
         "active_profile": DEFAULT_PROFILE,
-        "control_mode": "Manual",
         "targets": copy.deepcopy(CROP_PROFILES),
         "auto_rules": [],
         "pumps": pumps,
         "offsets": {"EC": 0.0, "PH": 0.0, "Temperature": 0.0, "Humidity": 0.0},
+        # Built-in profile names the operator deleted — CROP_PROFILES is a
+        # hardcoded constant, so "deleting" a built-in just hides it here.
+        "hidden_profiles": [],
+        # Reservoir dimensions (cm). Used to compute tank capacity (liters),
+        # which the LLM advisor uses to size EC dosing amounts correctly.
+        "water_tank": {"width_cm": 30.0, "length_cm": 30.0, "height_cm": 40.0},
+        # Growth-stage tracking, keyed by profile name:
+        #   {"planting_date": "YYYY-MM-DD" | None,
+        #    "stages": [{"name","duration_days","targets": {sensor:{min,max}}}]}
+        # Empty/no planting_date means that profile isn't tracking a grow
+        # cycle — targets fall back to the flat per-profile range as before.
+        "growth": {},
+        # UI language: "en" or "th" (see config.i18n).
+        "language": "en",
+        # Claude model used by the chat assistant / advisor. Selectable from
+        # the chat panel; must be one of llm_agent.AVAILABLE_MODELS.
+        "llm_model": "claude-opus-4-8",
     }
 
 

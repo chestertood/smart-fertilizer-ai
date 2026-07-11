@@ -6,17 +6,23 @@ LLM-approved) for the History view and for auditing.
 """
 
 import os
+import sys
 import sqlite3
 import logging
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
-# Project-root/data/fertilizer.db
-_DEFAULT_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data",
-)
+# Project-root/data/fertilizer.db. When frozen by `flet pack`, __file__ is in
+# the temp _MEIPASS dir (wiped on exit) — write the DB next to the exe instead
+# so logged history survives a restart.
+if getattr(sys, "frozen", False):
+    _DEFAULT_DIR = os.path.join(os.path.dirname(sys.executable), "data")
+else:
+    _DEFAULT_DIR = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "data",
+    )
 
 
 def _now() -> str:
@@ -46,7 +52,8 @@ class Database:
                 ec        REAL,
                 ph        REAL,
                 temp      REAL,
-                humidity  REAL
+                humidity  REAL,
+                stage     TEXT
             );
             CREATE TABLE IF NOT EXISTS dosing_events (
                 id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,15 +62,28 @@ class Database:
                 amount  REAL NOT NULL,
                 source  TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS llm_usage (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts             TEXT NOT NULL,
+                model          TEXT NOT NULL,
+                input_tokens   INTEGER NOT NULL,
+                output_tokens  INTEGER NOT NULL
+            );
             """
         )
+        # Migration for DBs created before the stage column existed —
+        # growth-stage context is training data for the future ML model.
+        cols = [r[1] for r in self._conn.execute("PRAGMA table_info(readings)")]
+        if "stage" not in cols:
+            self._conn.execute("ALTER TABLE readings ADD COLUMN stage TEXT")
         self._conn.commit()
 
     # -- readings -----------------------------------------------------------
 
-    def log_reading(self, readings: dict) -> None:
+    def log_reading(self, readings: dict, stage: str | None = None) -> None:
         """Persist one sensor snapshot. Keys: EC, PH, Temperature, Humidity.
-        Missing/NaN values are stored as NULL."""
+        Missing/NaN values are stored as NULL. `stage` = current growth-stage
+        name if a grow cycle is being tracked (context for future ML)."""
         def clean(v):
             try:
                 v = float(v)
@@ -72,14 +92,15 @@ class Database:
                 return None
 
         self._conn.execute(
-            "INSERT INTO readings (ts, ec, ph, temp, humidity) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO readings (ts, ec, ph, temp, humidity, stage) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 _now(),
                 clean(readings.get("EC")),
                 clean(readings.get("PH")),
                 clean(readings.get("Temperature")),
                 clean(readings.get("Humidity")),
+                stage,
             ),
         )
         self._conn.commit()
@@ -87,9 +108,19 @@ class Database:
     def recent_readings(self, limit: int = 100) -> list[sqlite3.Row]:
         """Most-recent-first list of reading rows."""
         cur = self._conn.execute(
-            "SELECT ts, ec, ph, temp, humidity FROM readings "
+            "SELECT ts, ec, ph, temp, humidity, stage FROM readings "
             "ORDER BY id DESC LIMIT ?",
             (limit,),
+        )
+        return cur.fetchall()
+
+    def readings_since(self, since_iso: str) -> list[sqlite3.Row]:
+        """Oldest-first reading rows since an ISO UTC timestamp — feeds the
+        History time-series charts."""
+        cur = self._conn.execute(
+            "SELECT ts, ec, ph, temp, humidity FROM readings "
+            "WHERE ts >= ? ORDER BY id ASC",
+            (since_iso,),
         )
         return cur.fetchall()
 
@@ -112,6 +143,45 @@ class Database:
             (limit,),
         )
         return cur.fetchall()
+
+    # -- LLM usage ------------------------------------------------------------
+    # Local token ledger. The regular API key cannot query Anthropic billing
+    # (that needs an org admin key), so the Settings page estimates cost from
+    # what this app itself has spent.
+
+    def log_llm_usage(self, model: str, input_tokens: int, output_tokens: int) -> None:
+        """Record token usage of one Claude API call."""
+        self._conn.execute(
+            "INSERT INTO llm_usage (ts, model, input_tokens, output_tokens) "
+            "VALUES (?, ?, ?, ?)",
+            (_now(), model, int(input_tokens), int(output_tokens)),
+        )
+        self._conn.commit()
+
+    def llm_usage_by_model(self, since: str | None = None) -> list[dict]:
+        """Per-model token totals, optionally since an ISO timestamp (UTC —
+        same clock as the ts column). Rows: {"model","calls","input","output"}."""
+        sql = ("SELECT model, COUNT(*) AS calls, "
+               "COALESCE(SUM(input_tokens),0) AS input, "
+               "COALESCE(SUM(output_tokens),0) AS output FROM llm_usage")
+        args: tuple = ()
+        if since is not None:
+            sql += " WHERE ts >= ?"
+            args = (since,)
+        sql += " GROUP BY model ORDER BY input + output DESC"
+        return [dict(r) for r in self._conn.execute(sql, args)]
+
+    def llm_usage_summary(self) -> dict:
+        """Per-model usage for today / this month / all time (UTC periods).
+        Feeds the Settings page cost estimate."""
+        now = datetime.now(timezone.utc)
+        day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        month_start = day_start.replace(day=1)
+        return {
+            "today": self.llm_usage_by_model(day_start.isoformat(timespec="seconds")),
+            "month": self.llm_usage_by_model(month_start.isoformat(timespec="seconds")),
+            "all": self.llm_usage_by_model(None),
+        }
 
     def close(self) -> None:
         self._conn.close()

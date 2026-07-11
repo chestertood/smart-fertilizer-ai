@@ -1,13 +1,19 @@
 import flet as ft
 
+# min/max = the sensor's own physical measurement range (hardware datasheet
+# spec), not a curated agricultural "healthy" band — the widest range that
+# makes sense, per the user's request. This is the fallback used when no crop
+# target is set, and the seed for brand-new custom profiles; tighten to an
+# actual crop-appropriate band via a crop profile / the Parameters page.
+# Sources: Atlas Scientific EZO-EC / EZO-pH circuit datasheets; DHT22 datasheet.
 SENSORS = [
     {
         "name": "EC",
         "value": 2.1,
         "unit": "mS/cm",
-        "min": 1.5,
-        "max": 3.0,
-        "abs_max": 5.0,
+        "min": 0.0,
+        "max": 500.0,   # Atlas EZO-EC circuit: 0.07–500,000 µS/cm
+        "abs_max": 500.0,
         "icon": ft.Icons.ELECTRIC_BOLT,
         "color": "#2196F3",
     },
@@ -15,8 +21,8 @@ SENSORS = [
         "name": "PH",
         "value": 6,
         "unit": "pH",
-        "min": 5.5,
-        "max": 7.0,
+        "min": 0.0,
+        "max": 14.0,    # Atlas EZO-pH circuit: 0.001–14.000 pH
         "abs_max": 14.0,
         "icon": ft.Icons.SCIENCE,
         "color": "#9C27B0",
@@ -25,9 +31,9 @@ SENSORS = [
         "name": "Temperature",
         "value": 24.5,
         "unit": "°C",
-        "min": 18.0,
-        "max": 28.0,
-        "abs_max": 50.0,
+        "min": -40.0,
+        "max": 80.0,    # DHT22: -40 to 80°C
+        "abs_max": 80.0,
         "icon": ft.Icons.THERMOSTAT,
         "color": "#FF9800",
     },
@@ -35,8 +41,8 @@ SENSORS = [
         "name": "Humidity",
         "value": 65.0,
         "unit": "%",
-        "min": 50.0,
-        "max": 80.0,
+        "min": 0.0,
+        "max": 100.0,   # DHT22: 0–100% RH
         "abs_max": 100.0,
         "icon": ft.Icons.WATER_DROP,
         "color": "#009688",

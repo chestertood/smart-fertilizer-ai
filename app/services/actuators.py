@@ -1,10 +1,22 @@
 import sys
+import time
 import logging
+import threading
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
 _IS_PI = sys.platform.startswith("linux")
+
+# Minimum seconds between doses of the same pump. Per-call clamping alone
+# doesn't stop rapid repeat presses (or repeat LLM approvals) from stacking
+# into an overdose — this enforces a settling window so the previous dose can
+# mix and register on the sensors before another is allowed.
+DOSE_COOLDOWN_S = 60.0
+
+
+class CooldownError(RuntimeError):
+    """Raised when a pump is asked to dose again inside its cooldown window."""
 
 
 # ---------------------------------------------------------------------------
@@ -25,6 +37,7 @@ class Actuator(ABC):
         # safety choke point for both manual and LLM-approved dosing.
         self.max_dose = max_dose
         self._connected = False
+        self._last_dose_at: float = 0.0
 
     @abstractmethod
     def connect(self) -> bool:
@@ -34,11 +47,21 @@ class Actuator(ABC):
     def _run(self, amount: float) -> None:
         """Actually drive the device for the (already-clamped) amount."""
 
+    def cooldown_remaining(self) -> float:
+        """Seconds until this pump may dose again (0 = ready)."""
+        return max(0.0, DOSE_COOLDOWN_S - (time.monotonic() - self._last_dose_at))
+
     def dose(self, amount: float) -> float:
         """Dispense `amount` (ml), clamped to [0, max_dose]. Returns the
-        amount actually dispensed."""
+        amount actually dispensed. Raises CooldownError if called again
+        within DOSE_COOLDOWN_S of the previous dose."""
         if not self._connected:
             raise RuntimeError(f"{self.name}: not connected")
+        remaining = self.cooldown_remaining()
+        if remaining > 0:
+            raise CooldownError(
+                f"{self.name}: wait {remaining:.0f}s before dosing again"
+            )
         clamped = max(0.0, min(float(amount), self.max_dose))
         if clamped != amount:
             logger.warning(
@@ -46,6 +69,7 @@ class Actuator(ABC):
                 self.name, amount, clamped, self.max_dose,
             )
         self._run(clamped)
+        self._last_dose_at = time.monotonic()
         return clamped
 
     def disconnect(self) -> None:
@@ -87,6 +111,7 @@ class RelayPump(Actuator):
         self._gpio_pin = gpio_pin
         self._ml_per_second = ml_per_second
         self._relay = None
+        self._running = threading.Event()
 
     def connect(self) -> bool:
         try:
@@ -103,11 +128,27 @@ class RelayPump(Actuator):
             return False
 
     def _run(self, amount: float) -> None:
-        import time
+        # Drive the relay from a background thread. Blocking here froze the
+        # UI for the whole on-time (a 200ml water dose at 1 ml/s = a 200s
+        # freeze). The dose cooldown is longer than any realistic on-time,
+        # but _running still guards against overlap defensively.
+        if self._running.is_set():
+            raise RuntimeError(f"{self.name}: pump already running")
         seconds = amount / self._ml_per_second if self._ml_per_second else 0.0
-        self._relay.on()
-        time.sleep(seconds)
-        self._relay.off()
+
+        def worker():
+            try:
+                self._relay.on()
+                time.sleep(seconds)
+            finally:
+                try:
+                    self._relay.off()
+                except Exception:
+                    logger.exception("%s: failed to switch relay off", self.name)
+                self._running.clear()
+
+        self._running.set()
+        threading.Thread(target=worker, name=f"pump-{self.name}", daemon=True).start()
 
     def disconnect(self) -> None:
         if self._relay:

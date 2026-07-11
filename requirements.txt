@@ -8,6 +8,17 @@
 # UI framework
 flet==0.85.1
 
+# Web mode (FLET_VIEW=web) — lets the Pi kiosk serve the UI over the network.
+# fastapi/starlette are pinned because flet-web 0.85.1 only requires
+# fastapi>=0.115.12 with no ceiling; an unpinned install can pull a starlette
+# whose Router no longer accepts fastapi's internal on_startup/on_shutdown
+# kwargs (TypeError: Router.__init__() got an unexpected keyword argument
+# 'on_startup'). fastapi>=0.139 dropped passing those kwargs through, so pin
+# to a known-good pair instead of a bare floor.
+flet-web==0.85.1
+fastapi>=0.139.0
+starlette>=1.3.1
+
 # Anthropic Claude API (LLM advisor)
 anthropic
 
