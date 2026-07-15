@@ -39,3 +39,20 @@ def _cosine_top_k(query_vec, matrix, k):
     top = np.argpartition(-sims, k - 1)[:k]
     order = top[np.argsort(-sims[top])]
     return order, sims[order]
+
+
+def _voyage():
+    """Voyage client from VOYAGE_API_KEY. Imported lazily so the app runs
+    without voyageai installed until knowledge is actually used."""
+    key = os.environ.get("VOYAGE_API_KEY")
+    if not key:
+        raise RuntimeError("VOYAGE_API_KEY is not set. Add it to your .env file.")
+    import voyageai
+    return voyageai.Client(api_key=key)
+
+
+def _embed(texts, input_type):
+    """Embed `texts` with Voyage. `input_type` is 'document' or 'query'.
+    Returns an (n, dim) float32 array."""
+    resp = _voyage().embed(texts, model=_EMBED_MODEL, input_type=input_type)
+    return np.asarray(resp.embeddings, dtype=np.float32)
