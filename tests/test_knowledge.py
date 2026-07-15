@@ -1,5 +1,7 @@
 """RAG knowledge tests — Voyage always mocked, no live API calls."""
+import json
 import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -52,6 +54,65 @@ class TestEmbed(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(RuntimeError):
                 knowledge._voyage()
+
+
+def _keyword_embed(texts, input_type):
+    """Deterministic fake embedder: vector = keyword counts over a fixed vocab.
+    Lets cosine similarity work without calling Voyage."""
+    vocab = ["kale", "lettuce", "tomato", "ec"]
+    rows = []
+    for t in texts:
+        low = t.lower()
+        rows.append([float(low.count(w)) for w in vocab])
+    return np.asarray(rows, dtype=np.float32)
+
+
+class TestBuildAndRetrieve(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.seed = os.path.join(self.tmp, "crops_seed.json")
+        self.index = os.path.join(self.tmp, "knowledge_index.npz")
+        with open(self.seed, "w", encoding="utf-8") as f:
+            json.dump([
+                {"crop": "Kale", "stages": [
+                    {"name": "Growing", "duration_days": 28,
+                     "targets": {"EC": {"min": 1.4, "max": 2.0}}}],
+                 "notes": "hardy brassica"},
+                {"crop": "Lettuce", "stages": [
+                    {"name": "Growing", "duration_days": 21,
+                     "targets": {"EC": {"min": 1.2, "max": 1.8}}}],
+                 "notes": "cool leafy green"},
+            ], f)
+        self._patchers = [
+            mock.patch.object(knowledge, "_SEED", self.seed),
+            mock.patch.object(knowledge, "_INDEX", self.index),
+            mock.patch.object(knowledge, "_KNOWLEDGE_DIR", self.tmp),
+            mock.patch.object(knowledge, "_embed", _keyword_embed),
+        ]
+        for p in self._patchers:
+            p.start()
+
+    def tearDown(self):
+        for p in self._patchers:
+            p.stop()
+
+    def test_build_then_retrieve_ranks_kale_first(self):
+        n = knowledge.build_index()
+        self.assertEqual(n, 2)
+        self.assertTrue(os.path.exists(self.index))
+        hits = knowledge.retrieve("kale EC target", k=1)
+        self.assertEqual(len(hits), 1)
+        self.assertIn("Kale", hits[0]["text"])
+        self.assertIn("score", hits[0])
+
+    def test_retrieve_without_index_returns_empty(self):
+        # index not built in this test
+        self.assertEqual(knowledge.retrieve("kale", k=3), [])
+
+    def test_build_with_no_knowledge_raises(self):
+        os.remove(self.seed)
+        with self.assertRaises(RuntimeError):
+            knowledge.build_index()
 
 
 if __name__ == "__main__":

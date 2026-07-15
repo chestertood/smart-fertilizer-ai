@@ -56,3 +56,94 @@ def _embed(texts, input_type):
     Returns an (n, dim) float32 array."""
     resp = _voyage().embed(texts, model=_EMBED_MODEL, input_type=input_type)
     return np.asarray(resp.embeddings, dtype=np.float32)
+
+
+def _crop_to_text(crop):
+    """Render a seed crop dict as readable text so its embedding captures it."""
+    lines = [f"Crop: {crop.get('crop', '')}"]
+    for st in crop.get("stages", []):
+        tgt = st.get("targets", {})
+        parts = [f"{k} {v.get('min')}-{v.get('max')}" for k, v in tgt.items()]
+        lines.append(
+            f"Stage {st.get('name', '')} "
+            f"({st.get('duration_days', '?')} days): " + ", ".join(parts)
+        )
+    if crop.get("notes"):
+        lines.append("Notes: " + crop["notes"])
+    return "\n".join(lines)
+
+
+def _pdf_chunks(path):
+    """One chunk per readable PDF page. Best-effort — bad pages are skipped."""
+    from pypdf import PdfReader
+    out = []
+    name = os.path.basename(path)
+    try:
+        reader = PdfReader(path)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Cannot read PDF %s: %s", name, exc)
+        return out
+    for i, page in enumerate(reader.pages):
+        try:
+            text = (page.extract_text() or "").strip()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Bad page %d in %s: %s", i + 1, name, exc)
+            continue
+        if text:
+            out.append({"text": text, "source": f"{name}:p{i + 1}"})
+    return out
+
+
+def _load_chunks():
+    """Load knowledge chunks: one per seed crop + one per PDF page."""
+    chunks = []
+    if os.path.exists(_SEED):
+        with open(_SEED, encoding="utf-8") as f:
+            for crop in json.load(f):
+                chunks.append({
+                    "text": _crop_to_text(crop),
+                    "source": f"seed:{crop.get('crop', '?')}",
+                })
+    for pdf in sorted(glob.glob(os.path.join(_KNOWLEDGE_DIR, "*.pdf"))):
+        chunks.extend(_pdf_chunks(pdf))
+    return chunks
+
+
+def build_index():
+    """Embed all knowledge chunks and save the index to `data/`. Raises
+    RuntimeError if there is nothing to index. Explicit maintenance step —
+    fails loudly on embedding errors."""
+    chunks = _load_chunks()
+    if not chunks:
+        raise RuntimeError(f"No knowledge found in {_KNOWLEDGE_DIR}")
+    vectors = _embed([c["text"] for c in chunks], "document")
+    os.makedirs(os.path.dirname(_INDEX), exist_ok=True)
+    np.savez(
+        _INDEX,
+        vectors=vectors,
+        texts=np.array([c["text"] for c in chunks], dtype=object),
+        sources=np.array([c["source"] for c in chunks], dtype=object),
+    )
+    logger.info("Built knowledge index: %d chunks -> %s", len(chunks), _INDEX)
+    return len(chunks)
+
+
+def retrieve(query, k=4):
+    """Up to k knowledge chunks most relevant to `query`, best first:
+    [{"text", "source", "score"}]. Best-effort — returns [] on any failure
+    (missing index/key, network) so the assistant never breaks over knowledge."""
+    try:
+        if not os.path.exists(_INDEX):
+            logger.warning("Knowledge index missing (%s); run build_knowledge.py", _INDEX)
+            return []
+        data = np.load(_INDEX, allow_pickle=True)
+        qvec = _embed([query], "query")[0]
+        idx, scores = _cosine_top_k(qvec, data["vectors"], k)
+        texts, sources = data["texts"], data["sources"]
+        return [
+            {"text": str(texts[i]), "source": str(sources[i]), "score": float(s)}
+            for i, s in zip(idx, scores)
+        ]
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Knowledge retrieval failed: %s", exc)
+        return []
