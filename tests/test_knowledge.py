@@ -8,6 +8,7 @@ from unittest import mock
 import numpy as np
 
 from app.services import knowledge
+from app.services import llm_agent
 
 
 class TestCosineTopK(unittest.TestCase):
@@ -113,6 +114,31 @@ class TestBuildAndRetrieve(unittest.TestCase):
         os.remove(self.seed)
         with self.assertRaises(RuntimeError):
             knowledge.build_index()
+
+
+class TestLLMInjection(unittest.TestCase):
+    def test_knowledge_block_empty_when_no_hits(self):
+        with mock.patch.object(llm_agent.knowledge, "retrieve", return_value=[]):
+            self.assertEqual(llm_agent._knowledge_block("kale"), "")
+
+    def test_knowledge_block_includes_text_and_source(self):
+        hits = [{"text": "Crop: Kale\nEC 1.4-2.0", "source": "seed:Kale", "score": 0.9}]
+        with mock.patch.object(llm_agent.knowledge, "retrieve", return_value=hits):
+            block = llm_agent._knowledge_block("kale EC")
+        self.assertIn("Kale", block)
+        self.assertIn("seed:Kale", block)
+        self.assertIn("Reference knowledge", block)
+
+    def test_last_user_text_from_string_and_blocks(self):
+        history = [
+            {"role": "user", "content": "first"},
+            {"role": "assistant", "content": "reply"},
+            {"role": "user", "content": [
+                {"type": "text", "text": "second"},
+                {"type": "image", "source": {}},
+            ]},
+        ]
+        self.assertEqual(llm_agent._last_user_text(history), "second")
 
 
 if __name__ == "__main__":

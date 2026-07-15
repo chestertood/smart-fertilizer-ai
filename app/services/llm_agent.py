@@ -14,6 +14,8 @@ import logging
 import anthropic
 from dotenv import load_dotenv
 
+from app.services import knowledge
+
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -212,6 +214,33 @@ def _build_prompt(
     return "\n".join(lines)
 
 
+def _last_user_text(history: list) -> str:
+    """Latest user message as plain text (flattens content blocks). Used to
+    build a retrieval query for the chat flow."""
+    for msg in reversed(history):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content")
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return " ".join(
+                b.get("text", "") for b in content
+                if isinstance(b, dict) and b.get("type") == "text"
+            )
+    return ""
+
+
+def _knowledge_block(query: str) -> str:
+    """Retrieve crop knowledge for `query` and format it for prompt injection.
+    Returns '' when nothing is retrieved (best-effort — never raises)."""
+    hits = knowledge.retrieve(query, k=4)
+    if not hits:
+        return ""
+    body = "\n\n".join(f"[{h['source']}]\n{h['text']}" for h in hits)
+    return "\n\nReference knowledge (curated crop data — use if relevant):\n" + body
+
+
 def recommend(
     readings: dict, targets: dict, profile_name: str = "", volume_liters: float | None = None,
     lang: str = "en", model: str | None = None,
@@ -230,6 +259,7 @@ def recommend(
     """
     client = _client()
     prompt = _build_prompt(readings, targets, profile_name, volume_liters, lang)
+    prompt += _knowledge_block(f"{profile_name} EC pH dosing target ranges")
 
     try:
         message = client.messages.create(
@@ -409,6 +439,7 @@ def chat(
     system = (
         _CHAT_SYSTEM + "\n\n" + _lang_instruction(lang) + "\n\n"
         + _context_block(readings, targets, profile_name, volume_liters)
+        + _knowledge_block(_last_user_text(history) or profile_name)
     )
     try:
         message = client.messages.create(
