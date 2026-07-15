@@ -1,0 +1,51 @@
+[
+  {
+    "crop": "Lettuce",
+    "stages": [
+      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 0.8, "max": 1.2}, "PH": {"min": 5.5, "max": 6.0}, "Temperature": {"min": 18, "max": 22}, "Humidity": {"min": 60, "max": 70}}},
+      {"name": "Growing", "duration_days": 21, "targets": {"EC": {"min": 1.2, "max": 1.8}, "PH": {"min": 5.5, "max": 6.2}, "Temperature": {"min": 18, "max": 24}, "Humidity": {"min": 55, "max": 70}}}
+    ],
+    "notes": "Cool-season leafy green. Keep EC low; high EC causes tip burn. pH 5.5-6.2."
+  },
+  {
+    "crop": "Kale",
+    "stages": [
+      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 16, "max": 22}, "Humidity": {"min": 55, "max": 70}}},
+      {"name": "Growing", "duration_days": 28, "targets": {"EC": {"min": 1.4, "max": 2.0}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 16, "max": 24}, "Humidity": {"min": 50, "max": 65}}}
+    ],
+    "notes": "Hardy brassica. Tolerates higher EC than lettuce. Thai: คะน้า."
+  },
+  {
+    "crop": "Pak Choi",
+    "stages": [
+      {"name": "Seedling", "duration_days": 10, "targets": {"EC": {"min": 0.8, "max": 1.2}, "PH": {"min": 6.0, "max": 6.5}, "Temperature": {"min": 18, "max": 22}, "Humidity": {"min": 60, "max": 70}}},
+      {"name": "Growing", "duration_days": 21, "targets": {"EC": {"min": 1.5, "max": 2.0}, "PH": {"min": 6.0, "max": 7.0}, "Temperature": {"min": 18, "max": 24}, "Humidity": {"min": 55, "max": 70}}}
+    ],
+    "notes": "Fast brassica. Thai: ผักกวางตุ้ง/กวางตุ้ง."
+  },
+  {
+    "crop": "Morning Glory",
+    "stages": [
+      {"name": "Seedling", "duration_days": 7, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 22, "max": 28}, "Humidity": {"min": 60, "max": 75}}},
+      {"name": "Growing", "duration_days": 14, "targets": {"EC": {"min": 1.4, "max": 2.2}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 24, "max": 30}, "Humidity": {"min": 60, "max": 75}}}
+    ],
+    "notes": "Warm-season, very fast. Thai: ผักบุ้ง (water spinach)."
+  },
+  {
+    "crop": "Tomato",
+    "stages": [
+      {"name": "Seedling", "duration_days": 21, "targets": {"EC": {"min": 1.2, "max": 1.8}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 25}, "Humidity": {"min": 60, "max": 70}}},
+      {"name": "Vegetative", "duration_days": 30, "targets": {"EC": {"min": 2.0, "max": 3.0}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 26}, "Humidity": {"min": 55, "max": 70}}},
+      {"name": "Fruiting", "duration_days": 60, "targets": {"EC": {"min": 2.5, "max": 3.5}, "PH": {"min": 5.8, "max": 6.3}, "Temperature": {"min": 20, "max": 26}, "Humidity": {"min": 50, "max": 65}}}
+    ],
+    "notes": "Fruiting crop needs high EC. Raise EC through fruiting for flavour."
+  },
+  {
+    "crop": "Basil",
+    "stages": [
+      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 25}, "Humidity": {"min": 55, "max": 70}}},
+      {"name": "Growing", "duration_days": 28, "targets": {"EC": {"min": 1.4, "max": 2.2}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 28}, "Humidity": {"min": 50, "max": 65}}}
+    ],
+    "notes": "Warm-season herb. Thai: โหระพา/กะเพรา family."
+  }
+]

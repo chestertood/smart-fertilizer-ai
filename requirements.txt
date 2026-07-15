@@ -22,6 +22,14 @@ starlette>=1.3.1
 # Anthropic Claude API (LLM advisor)
 anthropic
 
+# RAG crop knowledge: Voyage embeddings + PDF text extraction.
+# voyageai is API-based (no torch) so it runs on the Raspberry Pi.
+voyageai
+pypdf
+
+# numpy powers the cosine-similarity retrieval (brute-force over the index).
+numpy
+
 # Loads ANTHROPIC_API_KEY from the .env file
 python-dotenv
 
