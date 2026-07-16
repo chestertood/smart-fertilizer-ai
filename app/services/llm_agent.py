@@ -10,15 +10,19 @@ import os
 import json
 import base64
 import logging
+from functools import lru_cache
 
 import anthropic
 from dotenv import load_dotenv
 
-from app.services import knowledge
-
 logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+_SEED = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "knowledge", "crops_seed.json",
+)
 
 DEFAULT_MODEL = "claude-sonnet-5"
 
@@ -214,31 +218,31 @@ def _build_prompt(
     return "\n".join(lines)
 
 
-def _last_user_text(history: list) -> str:
-    """Latest user message as plain text (flattens content blocks). Used to
-    build a retrieval query for the chat flow."""
-    for msg in reversed(history):
-        if msg.get("role") != "user":
-            continue
-        content = msg.get("content")
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            return " ".join(
-                b.get("text", "") for b in content
-                if isinstance(b, dict) and b.get("type") == "text"
-            )
-    return ""
+@lru_cache(maxsize=1)
+def _knowledge_block() -> str:
+    """The whole curated crop file, formatted for prompt injection.
 
+    No retrieval step: the seed is a handful of crops (~1k tokens), so every
+    request ships all of it rather than paying an embedding round-trip to
+    select two thirds of it. Kept as raw JSON so Claude sees the stage plans
+    in the same shape set_growth_stages must emit. Best-effort — returns ''
+    if the seed is missing or unreadable.
 
-def _knowledge_block(query: str) -> str:
-    """Retrieve crop knowledge for `query` and format it for prompt injection.
-    Returns '' when nothing is retrieved (best-effort — never raises)."""
-    hits = knowledge.retrieve(query, k=4)
-    if not hits:
+    ponytail: whole-file injection; select per crop if the seed outgrows the
+    prompt budget (order of ~100 crops).
+    """
+    try:
+        with open(_SEED, encoding="utf-8") as f:
+            crops = json.load(f)
+    except (OSError, ValueError) as exc:  # noqa: BLE001
+        logger.warning("Cannot read crop knowledge (%s): %s", _SEED, exc)
         return ""
-    body = "\n\n".join(f"[{h['source']}]\n{h['text']}" for h in hits)
-    return "\n\nReference knowledge (curated crop data — use if relevant):\n" + body
+    if not crops:
+        return ""
+    return (
+        "\n\nReference knowledge (curated crop data — use if relevant):\n"
+        + json.dumps(crops, ensure_ascii=False)
+    )
 
 
 def recommend(
@@ -259,7 +263,7 @@ def recommend(
     """
     client = _client()
     prompt = _build_prompt(readings, targets, profile_name, volume_liters, lang)
-    prompt += _knowledge_block(f"{profile_name} EC pH dosing target ranges")
+    prompt += _knowledge_block()
 
     try:
         message = client.messages.create(
@@ -464,7 +468,7 @@ def chat(
     system = (
         _CHAT_SYSTEM + "\n\n" + _lang_instruction(lang) + "\n\n"
         + _context_block(readings, targets, profile_name, volume_liters, stages)
-        + _knowledge_block(_last_user_text(history) or profile_name)
+        + _knowledge_block()
     )
     try:
         message = client.messages.create(
