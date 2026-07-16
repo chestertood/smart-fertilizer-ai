@@ -98,31 +98,50 @@ def build_chat_widget(
             ],
         )
 
+    def approve_control():
+        """Approve button that, on success, scales out and a green check
+        scales in — so an approved card shows only the checkmark. Returns
+        (status_text, button, switcher, done_fn, fail_fn); shared by all cards."""
+        status = ft.Text("", size=11, color=_PRIMARY_DARK)
+        btn = ft.FilledButton(
+            "Approve", icon=ft.Icons.CHECK,
+            style=ft.ButtonStyle(bgcolor=_PRIMARY, color="#FFFFFF"),
+        )
+        switcher = ft.AnimatedSwitcher(
+            btn,
+            transition=ft.AnimatedSwitcherTransition.FADE,
+            duration=0, reverse_duration=0,
+        )
+
+        def done(msg: str):
+            status.value = msg
+            status.color = _PRIMARY_DARK
+            switcher.content = ft.Icon(ft.Icons.CHECK_CIRCLE, color=_PRIMARY, size=26)
+            page.update()
+
+        def fail(msg: str):
+            status.value = msg
+            status.color = "#C62828"
+            page.update()
+
+        return status, btn, switcher, done, fail
+
     def action_card(action: dict) -> ft.Control:
         """A dosing action recommended by the LLM, approvable inline."""
         pump = action.get("pump", "?")
         amount = float(action.get("amount_ml", 0) or 0)
         reason = action.get("reason", "")
 
-        status = ft.Text("", size=11, color=_PRIMARY_DARK)
-        approve_btn = ft.FilledButton(
-            "Approve", icon=ft.Icons.CHECK,
-            style=ft.ButtonStyle(bgcolor=_PRIMARY, color="#FFFFFF"),
-        )
+        status, approve_btn, switcher, done, fail = approve_control()
 
         def approve(e):
             try:
                 dispensed = actuator_hub.dose(pump, amount)
             except RuntimeError as exc:  # includes CooldownError
-                status.value = str(exc)
-                status.color = "#C62828"
-                page.update()
+                fail(str(exc))
                 return
             db.log_dose(pump, dispensed, source="llm")
-            status.value = f"Dispensed {dispensed:.1f} ml"
-            approve_btn.disabled = True
-            approve_btn.text = "Done"
-            page.update()
+            done(f"Dispensed {dispensed:.1f} ml")
 
         approve_btn.on_click = approve
 
@@ -147,7 +166,7 @@ def build_chat_widget(
                     ft.Text(reason, size=11, color="#33691E"),
                     ft.Row(
                         alignment=ft.MainAxisAlignment.END,
-                        controls=[status, approve_btn],
+                        controls=[status, switcher],
                     ),
                 ],
             ),
@@ -158,11 +177,7 @@ def build_chat_widget(
         crop = proposal.get("crop", "?")
         targets_prop = proposal.get("targets", {})
 
-        status = ft.Text("", size=11, color=_PRIMARY_DARK)
-        approve_btn = ft.FilledButton(
-            "Approve", icon=ft.Icons.CHECK,
-            style=ft.ButtonStyle(bgcolor=_PRIMARY, color="#FFFFFF"),
-        )
+        status, approve_btn, switcher, done, fail = approve_control()
 
         rows = []
         for name in ("EC", "PH", "Temperature", "Humidity"):
@@ -192,10 +207,7 @@ def build_chat_widget(
                 state.targets[name] = {"min": lo, "max": hi}
                 applied.append(name)
             state.save()
-            status.value = f"Saved ({', '.join(applied)})"
-            approve_btn.disabled = True
-            approve_btn.text = "Done"
-            page.update()
+            done(f"Saved ({', '.join(applied)})")
 
         approve_btn.on_click = approve
 
@@ -219,7 +231,7 @@ def build_chat_widget(
                     *rows,
                     ft.Row(
                         alignment=ft.MainAxisAlignment.END,
-                        controls=[status, approve_btn],
+                        controls=[status, switcher],
                     ),
                 ],
             ),
@@ -232,11 +244,7 @@ def build_chat_widget(
         crop = proposal.get("crop", "?")
         stages_prop = proposal.get("stages", [])
 
-        status = ft.Text("", size=11, color=_PRIMARY_DARK)
-        approve_btn = ft.FilledButton(
-            "Approve", icon=ft.Icons.CHECK,
-            style=ft.ButtonStyle(bgcolor=_PRIMARY, color="#FFFFFF"),
-        )
+        status, approve_btn, switcher, done, fail = approve_control()
 
         stage_rows = []
         for s in stages_prop:
@@ -275,15 +283,11 @@ def build_chat_widget(
                     new_stage["targets"][sensor_name] = {"min": lo, "max": hi}
                 valid_count += 1
             if valid_count == 0:
-                status.value = "No usable stages"
-                status.color = "#C62828"
+                fail("No usable stages")
             else:
                 state.start_planting()
                 state.save()
-                status.value = f"Created {valid_count} stages — planting starts today"
-                approve_btn.disabled = True
-                approve_btn.text = "Done"
-            page.update()
+                done(f"Created {valid_count} stages — planting starts today")
 
         approve_btn.on_click = approve
 
@@ -307,7 +311,7 @@ def build_chat_widget(
                     *stage_rows,
                     ft.Row(
                         alignment=ft.MainAxisAlignment.END,
-                        controls=[status, approve_btn],
+                        controls=[status, switcher],
                     ),
                 ],
             ),
