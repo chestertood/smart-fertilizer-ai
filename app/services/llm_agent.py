@@ -35,6 +35,21 @@ AVAILABLE_MODELS = [
     ("claude-haiku-4-5", "Haiku 4.5", "Fast & cheap"),
 ]
 
+# Models that accept thinking={"type": "adaptive"}. Haiku 4.5 predates adaptive
+# thinking (it wants the older budget_tokens shape) and errors on it, so it runs
+# without thinking — it's the fast/cheap pick anyway.
+_ADAPTIVE_MODELS = {"claude-opus-4-8", "claude-sonnet-5"}
+
+
+def _thinking(model: str) -> dict:
+    """messages.create kwargs enabling adaptive thinking where supported.
+
+    Not cosmetic: Opus 4.8 runs *without* thinking unless asked explicitly, so
+    omitting this makes the operator's Opus pick reason less than the Sonnet
+    default, which is adaptive on its own."""
+    return {"thinking": {"type": "adaptive"}} if model in _ADAPTIVE_MODELS else {}
+
+
 # USD per million tokens (input, output) — for the Settings cost estimate.
 # Sticker prices as of 2026-06; update when Anthropic changes pricing.
 PRICING_PER_MTOK = {
@@ -262,16 +277,20 @@ def recommend(
     Raises LLMError on any failure (missing key, network, malformed response).
     """
     client = _client()
+    model = model or DEFAULT_MODEL
     prompt = _build_prompt(readings, targets, profile_name, volume_liters, lang)
     prompt += _knowledge_block()
 
     try:
         message = client.messages.create(
-            model=model or DEFAULT_MODEL,
-            max_tokens=1024,
+            model=model,
+            # Headroom for adaptive thinking, which shares max_tokens with the
+            # answer. The tool call itself is small; this is a ceiling, not spend.
+            max_tokens=8192,
             tools=[_RECOMMEND_TOOL],
             tool_choice={"type": "tool", "name": "recommend_dosing"},
             messages=[{"role": "user", "content": prompt}],
+            **_thinking(model),
         )
     except Exception as exc:
         logger.error("LLM request failed: %s", exc)
@@ -285,7 +304,7 @@ def recommend(
                 data = json.loads(data)
             data.setdefault("summary", "")
             data.setdefault("actions", [])
-            data["usage"] = _usage_dict(message, model or DEFAULT_MODEL)
+            data["usage"] = _usage_dict(message, model)
             return data
 
     raise LLMError("Claude did not return a structured recommendation.")
@@ -465,6 +484,7 @@ def chat(
     Either way the UI renders an approve card before anything is applied.
     Raises LLMError on failure."""
     client = _client()
+    model = model or DEFAULT_MODEL
     system = (
         _CHAT_SYSTEM + "\n\n" + _lang_instruction(lang) + "\n\n"
         + _context_block(readings, targets, profile_name, volume_liters, stages)
@@ -472,11 +492,15 @@ def chat(
     )
     try:
         message = client.messages.create(
-            model=model or DEFAULT_MODEL,
-            max_tokens=1536,
+            model=model,
+            # Headroom for adaptive thinking, which shares max_tokens with the
+            # reply and any tool call. A full growth plan is already ~900 tokens
+            # of JSON; the old 1536 would truncate it once thinking is on.
+            max_tokens=8192,
             system=system,
             tools=[_SET_PARAMS_TOOL, _SET_GROWTH_TOOL],
             messages=history,
+            **_thinking(model),
         )
     except Exception as exc:
         logger.error("LLM chat failed: %s", exc)
@@ -505,5 +529,5 @@ def chat(
         "text": text or "(no reply)",
         "param_proposal": param_proposal,
         "growth_proposal": growth_proposal,
-        "usage": _usage_dict(message, model or DEFAULT_MODEL),
+        "usage": _usage_dict(message, model),
     }
