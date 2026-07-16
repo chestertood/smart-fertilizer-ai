@@ -146,6 +146,36 @@ class AppState:
             "targets": copy.deepcopy(base),
         })
 
+    def set_stages(self, stages: list[dict]) -> int:
+        """Replace the active profile's growth stages with a whole proposed
+        plan — entries of {"name", "duration_days", "targets": {sensor:
+        {min, max}}}. Replaces rather than appends: a proposed plan is the
+        full cycle, so approving one twice must not stack duplicates.
+        Malformed entries/ranges are skipped; returns how many stages were
+        set. Returns 0 without touching existing stages if none are usable."""
+        valid = []
+        for s in stages:
+            try:
+                name = str(s["name"])
+                days = max(1, int(s["duration_days"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+            valid.append((name, days, s.get("targets") or {}))
+        if not valid:
+            return 0
+        self.growth_config()["stages"].clear()
+        for name, days, targets in valid:
+            self.add_stage(name, days)
+            stage = self.growth_config()["stages"][-1]
+            for sensor, rng in targets.items():
+                try:
+                    lo, hi = float(rng["min"]), float(rng["max"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if lo < hi:
+                    stage["targets"][sensor] = {"min": lo, "max": hi}
+        return len(valid)
+
     def delete_stage(self, index: int) -> bool:
         g = self.growth_config()
         if 0 <= index < len(g["stages"]):

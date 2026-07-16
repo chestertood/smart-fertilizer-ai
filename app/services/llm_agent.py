@@ -307,7 +307,12 @@ _CHAT_SYSTEM = (
     "each stage with a name, duration in days, and its own target ranges "
     "(early stages usually want lower EC, later stages higher). If the "
     "operator doesn't give durations, use realistic typical values for that "
-    "crop. The operator approves before stages are created and planting starts."
+    "crop. The operator approves before stages are created and planting starts.\n\n"
+    "set_growth_stages REPLACES the profile's whole stage list — it does not "
+    "append. So always pass the complete plan you want the profile to end up "
+    "with, in order. If the operator asks to change, add, or drop one stage, "
+    "repeat the existing stages (listed below) with that one edit applied; "
+    "omitting them deletes them."
 )
 
 # Sensor keys must match config.sensors.SENSORS / state.targets.
@@ -353,9 +358,11 @@ _SET_PARAMS_TOOL = {
 _SET_GROWTH_TOOL = {
     "name": "set_growth_stages",
     "description": (
-        "Propose a sequence of growth stages (e.g. seedling, growing, mature) "
-        "for the crop the operator wants to grow, each with its own duration "
-        "and target ranges. The operator approves before stages are created "
+        "Propose the complete sequence of growth stages (e.g. seedling, "
+        "growing, mature) for the crop the operator wants to grow, each with "
+        "its own duration and target ranges. This REPLACES any stages the "
+        "profile already has — pass every stage that should exist afterwards, "
+        "not just new ones. The operator approves before stages are created "
         "and the grow cycle starts (planting date = today)."
     ),
     "input_schema": {
@@ -394,8 +401,22 @@ _SET_GROWTH_TOOL = {
 }
 
 
+def _stages_block(stages: list | None) -> str:
+    """Existing growth stages, so set_growth_stages (which replaces the list)
+    can repeat them instead of silently dropping them."""
+    if not stages:
+        return "\nGrowth stages: none configured yet."
+    lines = ["\nExisting growth stages (in order):"]
+    for s in stages:
+        tgt = s.get("targets", {}).get("EC", {})
+        ec = f", EC {tgt['min']}–{tgt['max']}" if tgt else ""
+        lines.append(f"  - {s.get('name')}: {s.get('duration_days')} days{ec}")
+    return "\n".join(lines)
+
+
 def _context_block(
-    readings: dict, targets: dict, profile_name: str, volume_liters: float | None = None
+    readings: dict, targets: dict, profile_name: str, volume_liters: float | None = None,
+    stages: list | None = None,
 ) -> str:
     units = {"EC": "mS/cm", "PH": "pH", "Temperature": "°C", "Humidity": "%"}
     lines = [f"Current crop profile: {profile_name or 'n/a'}", "Live readings:"]
@@ -411,12 +432,13 @@ def _context_block(
             "When discussing dosing amounts, size them proportionally to this "
             "reservoir volume, not a generic guess."
         )
-    return "\n".join(lines)
+    return "\n".join(lines) + _stages_block(stages)
 
 
 def chat(
     history: list, readings: dict, targets: dict, profile_name: str = "",
     volume_liters: float | None = None, lang: str = "en", model: str | None = None,
+    stages: list | None = None,
 ) -> dict:
     """Free-form Q&A. `history` is a list of {"role", "content"} messages
     (user/assistant); user content may be a plain string or content blocks
@@ -433,12 +455,15 @@ def chat(
     `param_proposal` carries {"crop", "rationale", "targets": {sensor: {min,max}}}.
     When the operator describes growth stages, Claude calls set_growth_stages and
     `growth_proposal` carries {"crop", "rationale", "stages": [{"name",
-    "duration_days", "targets"}, ...]}. Either way the UI renders an approve
-    card before anything is applied. Raises LLMError on failure."""
+    "duration_days", "targets"}, ...]} — the *complete* plan, since approving it
+    replaces the profile's stage list. Pass the profile's current `stages` so
+    Claude can repeat the ones it isn't changing instead of dropping them.
+    Either way the UI renders an approve card before anything is applied.
+    Raises LLMError on failure."""
     client = _client()
     system = (
         _CHAT_SYSTEM + "\n\n" + _lang_instruction(lang) + "\n\n"
-        + _context_block(readings, targets, profile_name, volume_liters)
+        + _context_block(readings, targets, profile_name, volume_liters, stages)
         + _knowledge_block(_last_user_text(history) or profile_name)
     )
     try:

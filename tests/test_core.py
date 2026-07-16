@@ -104,6 +104,47 @@ class TestGrowthStages(unittest.TestCase):
         s = self._fresh_state()
         self.assertIsNone(s.current_stage_info())
 
+    def _plan(self, *names):
+        return [
+            {"name": n, "duration_days": 7,
+             "targets": {"EC": {"min": 1.0, "max": 1.6}}}
+            for n in names
+        ]
+
+    def test_set_stages_replaces_instead_of_appending(self):
+        s = self._fresh_state()
+        s.set_stages(self._plan("Seedling", "Growing"))
+        s.set_stages(self._plan("Seedling", "Growing", "Mature"))
+        self.assertEqual(
+            [st["name"] for st in s.growth_config()["stages"]],
+            ["Seedling", "Growing", "Mature"],
+        )
+
+    def test_set_stages_applies_proposed_targets(self):
+        s = self._fresh_state()
+        self.assertEqual(s.set_stages(self._plan("Seedling")), 1)
+        self.assertEqual(
+            s.growth_config()["stages"][0]["targets"]["EC"],
+            {"min": 1.0, "max": 1.6},
+        )
+
+    def test_set_stages_skips_bad_entries_and_ranges(self):
+        s = self._fresh_state()
+        count = s.set_stages([
+            {"name": "Ok", "duration_days": 5, "targets": {"EC": {"min": 2.0, "max": 1.0}}},
+            {"name": "No days"},
+        ])
+        self.assertEqual(count, 1)
+        self.assertNotEqual(
+            s.growth_config()["stages"][0]["targets"]["EC"], {"min": 2.0, "max": 1.0}
+        )
+
+    def test_set_stages_keeps_existing_when_nothing_usable(self):
+        s = self._fresh_state()
+        self._add_stages(s)
+        self.assertEqual(s.set_stages([{"bogus": 1}]), 0)
+        self.assertEqual(len(s.growth_config()["stages"]), 3)
+
     def test_stage_progression(self):
         s = self._fresh_state()
         self._add_stages(s)

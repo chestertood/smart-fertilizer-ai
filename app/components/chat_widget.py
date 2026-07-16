@@ -264,30 +264,13 @@ def build_chat_widget(
             )
 
         def approve(e):
-            valid_count = 0
-            for s in stages_prop:
-                try:
-                    name = str(s["name"])
-                    days = max(1, int(s["duration_days"]))
-                except (KeyError, TypeError, ValueError):
-                    continue
-                state.add_stage(name, days)
-                new_stage = state.growth_config()["stages"][-1]
-                for sensor_name, rng in s.get("targets", {}).items():
-                    try:
-                        lo, hi = float(rng["min"]), float(rng["max"])
-                    except (KeyError, TypeError, ValueError):
-                        continue
-                    if lo >= hi:
-                        continue
-                    new_stage["targets"][sensor_name] = {"min": lo, "max": hi}
-                valid_count += 1
-            if valid_count == 0:
+            count = state.set_stages(stages_prop)
+            if count == 0:
                 fail("No usable stages")
             else:
                 state.start_planting()
                 state.save()
-                done(f"Created {valid_count} stages — planting starts today")
+                done(f"Set {count} stages — planting starts today")
 
         approve_btn.on_click = approve
 
@@ -522,6 +505,7 @@ def build_chat_widget(
                 None, llm_agent.chat, list(history),
                 dict(state.last_readings), state.targets, state.active_profile,
                 state.tank_capacity_liters(), state.language, state.llm_model,
+                list(state.growth_config()["stages"]),
             )
         except llm_agent.LLMError as exc:
             reply = f"⚠ {exc}"
