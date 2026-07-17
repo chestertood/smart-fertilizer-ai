@@ -8,6 +8,7 @@ import datetime
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 # Point the config store at a temp dir before anything imports it, so tests
 # never touch the real data/app_config.json.
@@ -18,7 +19,7 @@ store._DATA_DIR = _TMP
 store._CONFIG_PATH = os.path.join(_TMP, "app_config.json")
 
 from config.sensors import get_status  # noqa: E402
-from config.profiles import AppState  # noqa: E402
+from config.profiles import AppState, DEFAULT_PROFILE  # noqa: E402
 from app.components.sensor_card import _bar_fraction  # noqa: E402
 from app.services.actuators import (  # noqa: E402
     ActuatorHub, CooldownError, DOSE_COOLDOWN_S,
@@ -194,11 +195,28 @@ class TestProfiles(unittest.TestCase):
         self.assertTrue(s.delete_profile("TestCrop"))
         self.assertNotIn("TestCrop", s.profile_names)
 
-    def test_cannot_delete_last_profile(self):
+    def test_default_profile_always_present_and_undeletable(self):
         s = AppState()
-        for name in list(s.profile_names)[:-1]:
+        self.assertIn(DEFAULT_PROFILE, s.profile_names)
+        self.assertFalse(s.delete_profile(DEFAULT_PROFILE))
+        self.assertIn(DEFAULT_PROFILE, s.profile_names)
+
+    def test_default_survives_deleting_everything_else(self):
+        s = AppState()
+        s.create_profile("TestCrop")
+        for name in list(s.profile_names):
             s.delete_profile(name)
-        self.assertFalse(s.delete_profile(s.profile_names[0]))
+        self.assertEqual(s.profile_names, [DEFAULT_PROFILE])
+        self.assertEqual(s.active_profile, DEFAULT_PROFILE)
+
+    def test_default_cannot_be_hidden_by_saved_config(self):
+        # A config written before Default became permanent (or hand-edited)
+        # must not be able to hide it.
+        with mock.patch.object(
+            store, "load", return_value={"hidden_profiles": [DEFAULT_PROFILE]}
+        ):
+            s = AppState()
+        self.assertIn(DEFAULT_PROFILE, s.profile_names)
 
     def test_tank_capacity(self):
         s = AppState()

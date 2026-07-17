@@ -4,7 +4,7 @@ import flet as ft
 from app import theme
 from app.services import llm_agent
 from app.services.database import Database
-from config.profiles import AppState
+from config.profiles import AppState, DEFAULT_PROFILE
 from config.i18n import t, LANGUAGES
 
 _NEW_PROFILE_KEY = "__new__"
@@ -104,6 +104,8 @@ def build_settings(
             return
         state.active_profile = e.control.value
         state.save()
+        delete_btn.disabled = state.active_profile == DEFAULT_PROFILE
+        delete_btn.update()
         feedback.value = (
             f"Active profile saved: {state.active_profile}. "
             "Edit its setpoints on the Parameters page."
@@ -130,7 +132,10 @@ def build_settings(
             feedback.update()
             close_delete_dialog()
         else:
-            delete_error.value = "Can't delete the last remaining profile."
+            delete_error.value = (
+                f"The '{DEFAULT_PROFILE}' profile can't be deleted — it's the "
+                "fallback the app always keeps."
+            )
             delete_error.update()
 
     delete_dialog = ft.AlertDialog(
@@ -165,6 +170,9 @@ def build_settings(
         ft.Icons.DELETE_OUTLINE, icon_color="#C62828",
         tooltip="Delete this profile",
         on_click=open_delete_dialog,
+        # Greyed out on the permanent fallback profile rather than opening a
+        # dialog that could only ever refuse. Kept in sync by on_profile_change.
+        disabled=state.active_profile == DEFAULT_PROFILE,
     )
 
     # -- language -------------------------------------------------------------

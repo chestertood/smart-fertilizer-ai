@@ -25,12 +25,16 @@ _GENERIC_DEFAULTS = _copy.deepcopy(DEFAULT_TARGETS)
 
 # name -> {sensor -> (min, max)}. All profiles seeded from the same defaults.
 CROP_PROFILES: dict[str, dict[str, dict[str, float]]] = {
+    "Default":           _copy.deepcopy(DEFAULT_TARGETS),
     "Leafy Greens":      _copy.deepcopy(DEFAULT_TARGETS),
     "Fruiting (Tomato)": _copy.deepcopy(DEFAULT_TARGETS),
     "Herbs":             _copy.deepcopy(DEFAULT_TARGETS),
 }
 
-DEFAULT_PROFILE = "Leafy Greens"
+# Permanent fallback profile: always present and never deletable, so the app
+# always has somewhere to land when every other profile is gone. Enforced in
+# delete_profile() and in the hidden_profiles load below.
+DEFAULT_PROFILE = "Default"
 
 
 class AppState:
@@ -51,7 +55,10 @@ class AppState:
         self.pumps: dict = cfg.get("pumps", {})
         self.offsets: dict = cfg.get("offsets", {})
         # Built-in profile names the operator deleted (see delete_profile).
+        # DEFAULT_PROFILE is dropped on load, so a config written before it
+        # became permanent (or hand-edited) can't hide it.
         self.hidden_profiles: set = set(cfg.get("hidden_profiles", []))
+        self.hidden_profiles.discard(DEFAULT_PROFILE)
         # Reservoir dimensions (cm) for capacity / dosing math.
         self.water_tank: dict = cfg.get(
             "water_tank", {"width_cm": 30.0, "length_cm": 30.0, "height_cm": 40.0}
@@ -90,11 +97,15 @@ class AppState:
         return True
 
     def delete_profile(self, name: str) -> bool:
-        """Delete a profile (built-in or custom). Refuses to delete the last
-        remaining profile. Switches active_profile to another one if the
-        deleted profile was active. Returns False if not allowed."""
+        """Delete a profile (built-in or custom). Refuses to delete
+        DEFAULT_PROFILE, which is the permanent fallback. Switches
+        active_profile to another one if the deleted profile was active.
+        Returns False if not allowed.
+
+        No separate "last remaining profile" guard is needed: DEFAULT_PROFILE
+        can never be deleted, so at least one profile always survives."""
         names = self.profile_names
-        if name not in names or len(names) <= 1:
+        if name == DEFAULT_PROFILE or name not in names:
             return False
         self._targets.pop(name, None)
         if name in CROP_PROFILES:
