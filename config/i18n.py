@@ -16,6 +16,14 @@ _STRINGS = {
     "nav.parameters": {EN: "Parameters", TH: "พารามิเตอร์"},
     "nav.history":    {EN: "History", TH: "ประวัติ"},
     "nav.settings":   {EN: "Settings", TH: "ตั้งค่า"},
+    "nav.exit":       {EN: "Exit", TH: "ออกจากโปรแกรม"},
+
+    # Kiosk-mode exit confirm (the window has no title bar to close).
+    "exit.title":  {EN: "Exit app?", TH: "ออกจากโปรแกรม?"},
+    "exit.body":   {EN: "Sensor monitoring and logging stop until the app is started again.",
+                    TH: "การอ่านค่าเซนเซอร์และการบันทึกข้อมูลจะหยุด จนกว่าจะเปิดโปรแกรมใหม่"},
+    "exit.cancel": {EN: "Cancel", TH: "ยกเลิก"},
+    "exit.confirm": {EN: "Exit", TH: "ออก"},
 
     "dashboard.title":    {EN: "Sensor Dashboard", TH: "แดชบอร์ดเซนเซอร์"},
     "dashboard.subtitle": {EN: "Real-time monitoring", TH: "ติดตามผลแบบเรียลไทม์"},

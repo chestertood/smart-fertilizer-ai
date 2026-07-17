@@ -18,7 +18,15 @@ from app.views.settings_view import build_settings
 from app.services.hardware import SensorHub
 from app.services.actuators import ActuatorHub
 from app.services.database import Database
+from config.i18n import t
 from config.profiles import AppState
+
+# Kiosk is the normal way this app runs, on the Pi's touch screen and on
+# Windows: borderless full-screen with no title bar, so the window can't be
+# moved, resized or closed by a stray touch. The app carries its own Exit
+# button at the bottom of the nav rail instead.
+# Set KIOSK=0 for an ordinary resizable window (handy while developing).
+KIOSK = os.environ.get("KIOSK", "1") != "0"
 
 POLL_INTERVAL_S = 2.0
 CONNECTIVITY_INTERVAL_S = 5.0
@@ -57,6 +65,9 @@ def main(page: ft.Page) -> None:
         # Replace the default Flet window/taskbar icon with the app logo
         # (served from assets_dir configured in main.py).
         page.window.icon = "icon.ico"
+        if KIOSK:
+            page.window.full_screen = True
+            page.window.frameless = True
 
     hub = SensorHub()
     hub.connect_all()
@@ -125,12 +136,73 @@ def main(page: ft.Page) -> None:
         Settings dropdown), so it takes effect without an app restart."""
         set_nav_language(rail, state.language)
         rail.update()
+        exit_button.tooltip = t("nav.exit", state.language)
+        if KIOSK:
+            exit_button.update()
         if flag_setter[0] is not None:
             flag_setter[0](state.language)
         body.controls = [views[current_view_name[0]]()]
         page.update()
 
     rail = build_nav_rail(navigate, selected_index=0, lang=state.language)
+
+    def open_exit_dialog(e=None) -> None:
+        # Built fresh on each open so it picks up the current language, and
+        # confirmed because a stray touch on a kiosk would otherwise stop
+        # monitoring until someone restarts the app by hand.
+        lang = state.language
+
+        def close(_=None) -> None:
+            dlg.open = False
+            page.update()
+
+        # page.window.close() is a coroutine in Flet 0.85 — a sync handler
+        # would build it and drop it un-awaited, leaving the button dead.
+        async def do_exit(_=None) -> None:
+            await page.window.close()
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(t("exit.title", lang)),
+            content=ft.Text(t("exit.body", lang), size=12),
+            actions=[
+                ft.TextButton(t("exit.cancel", lang), on_click=close),
+                ft.FilledButton(
+                    t("exit.confirm", lang),
+                    on_click=do_exit,
+                    style=ft.ButtonStyle(bgcolor=theme.DANGER, color="#FFFFFF"),
+                ),
+            ],
+        )
+        page.show_dialog(dlg)
+
+    # Kiosk has no title bar, so the app carries its own Exit button, pinned
+    # below the rail at the bottom-left. Windowed builds keep their native
+    # close button and don't need it.
+    exit_button = ft.IconButton(
+        icon=ft.Icons.POWER_SETTINGS_NEW,
+        icon_color=theme.DANGER,
+        tooltip=t("nav.exit", state.language),
+        on_click=open_exit_dialog,
+    )
+    if KIOSK:
+        rail.expand = True
+        nav_side: ft.Control = ft.Column(
+            spacing=0,
+            controls=[
+                rail,
+                ft.Container(
+                    bgcolor=theme.NAV_BG,
+                    padding=ft.Padding(left=20, right=0, top=4, bottom=15),
+                    content=ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        controls=[exit_button],
+                    ),
+                ),
+            ],
+        )
+    else:
+        nav_side = rail
 
     page.add(
         ft.Column(
@@ -143,7 +215,7 @@ def main(page: ft.Page) -> None:
                     spacing=0,
                     vertical_alignment=ft.CrossAxisAlignment.STRETCH,
                     controls=[
-                        rail,
+                        nav_side,
                         ft.VerticalDivider(width=1),
                         ft.Container(expand=True, content=body),
                     ],

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Smart Fertilizer
+Comment=Start the fertilizer dashboard full-screen on the touch display
+Exec=python3 /home/pi/LLM_fertilizer/main.py
+Terminal=false
+X-GNOME-Autostart-enabled=true
