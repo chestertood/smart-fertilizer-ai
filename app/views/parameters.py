@@ -12,6 +12,63 @@ from config.i18n import t
 _SENSOR_META = {s["name"]: s for s in SENSORS}
 _OPS = ["<", ">"]
 
+def is_number(text) -> bool:
+    """Does this field's text parse as a number? Blank and "1.2.3" don't."""
+    try:
+        float(text)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def invalid_target_sensors(targets: dict) -> list[str]:
+    """Sensors whose range can't be saved: not a number, or min >= max.
+
+    Pure data check — works no matter which section is currently on screen
+    (unlike the per-row border/error UI in Setpoints, which only exists while
+    that section's controls are mounted).
+
+    Non-numeric only reaches here from a hand-edited app_config.json: the
+    fields filter letters out (see num_field) and parse_float() never writes a
+    non-float into state. Comparing a str to a float raises TypeError, so this
+    has to coerce rather than compare raw.
+    """
+    bad = []
+    for name, rng in targets.items():
+        try:
+            lo, hi = float(rng["min"]), float(rng["max"])
+        except (KeyError, TypeError, ValueError):
+            bad.append(name)
+        else:
+            if lo >= hi:
+                bad.append(name)
+    return bad
+
+
+def num_field(signed: bool = False, **kwargs) -> ft.TextField:
+    """TextField that only accepts numeric characters.
+
+    `signed=True` also allows a minus sign, for values that can legitimately
+    go below zero: sensor calibration offsets and temperature targets. Volumes
+    (ml), durations and tank dimensions stay unsigned.
+
+    keyboard_type only picks which on-screen keyboard appears — it doesn't stop
+    a physical keyboard (or a paste) from entering "abc". input_filter is what
+    blocks characters, and it is not trusted on its own: do_save() re-checks
+    every mounted field's text, so a filter that fails to apply can't get bad
+    input saved.
+    """
+    return ft.TextField(
+        keyboard_type=ft.KeyboardType.NUMBER,
+        # Built per field rather than shared: a single InputFilter instance
+        # reused across every TextField is exactly the kind of thing Flet's
+        # control tree mishandles, and the object is cheap.
+        input_filter=ft.InputFilter(
+            regex_string=r"[0-9.\-]" if signed else r"[0-9.]"
+        ),
+        **kwargs,
+    )
+
 
 def build_parameters(
     page: ft.Page,
@@ -42,6 +99,22 @@ def build_parameters(
     section_host = ft.Container(expand=True)  # holds the active section
     current = {"name": "Setpoints"}
 
+    # Numeric fields belonging to the section currently on screen. Only one
+    # section is mounted at a time (swap() rebuilds section_host), so this is
+    # cleared and repopulated per swap.
+    #
+    # do_save() needs these because `state` alone cannot see bad input:
+    # parse_float() deliberately keeps the last good value when the text won't
+    # parse, so a box showing "abc" leaves state perfectly valid and Save would
+    # sail through. Checking the field text is the only way to catch it.
+    live_num_fields: list[ft.TextField] = []
+
+    def nf(signed: bool = False, **kwargs) -> ft.TextField:
+        """num_field() that registers itself for the save-time text check."""
+        field = num_field(signed=signed, **kwargs)
+        live_num_fields.append(field)
+        return field
+
     def mark_dirty():
         if not dirty["v"]:
             dirty["v"] = True
@@ -68,17 +141,6 @@ def build_parameters(
         except (TypeError, ValueError):
             return fallback
 
-    def revert_on_blur(field: ft.TextField, get_current: callable) -> callable:
-        """On_blur handler: if the field was left empty/invalid, restore the
-        last committed numeric value so it never displays blank."""
-        def handler(e):
-            try:
-                float(field.value)
-            except (TypeError, ValueError):
-                field.value = str(get_current())
-                field.update()
-        return handler
-
     # -- section: Setpoints -------------------------------------------------
 
     def section_setpoints() -> ft.Control:
@@ -104,19 +166,30 @@ def build_parameters(
 
             refresh_status()
 
-            min_field = ft.TextField(
+            min_field = nf(
+                signed=True,
                 label="min", value=str(tgt["min"]), width=90, height=46, text_size=14,
-                keyboard_type=ft.KeyboardType.NUMBER,
             )
-            max_field = ft.TextField(
+            max_field = nf(
+                signed=True,
                 label="max", value=str(tgt["max"]), width=90, height=46, text_size=14,
-                keyboard_type=ft.KeyboardType.NUMBER,
             )
             range_error = ft.Text("", size=10, color="#C62828")
 
             def apply_validation(n=name, minf=min_field, maxf=max_field, err=range_error):
-                """Set border/error state from data. No .update() here — safe
-                to call before the row is mounted (initial build) too."""
+                """Set border/error state from the field text and the data. No
+                .update() here — safe to call before the row is mounted
+                (initial build) too.
+
+                Text is checked before state because state can't show the
+                problem: parse_float() keeps the last good number when the box
+                won't parse, so "abc" leaves state looking perfectly valid."""
+                not_numbers = [f for f in (minf, maxf) if not is_number(f.value)]
+                if not_numbers:
+                    for f in (minf, maxf):
+                        f.border_color = "#C62828" if f in not_numbers else None
+                    err.value = "numbers only"
+                    return False
                 lo, hi = state.targets[n]["min"], state.targets[n]["max"]
                 invalid = lo >= hi
                 minf.border_color = "#C62828" if invalid else None
@@ -124,24 +197,29 @@ def build_parameters(
                 err.value = "min must be less than max" if invalid else ""
                 return not invalid
 
-            def on_min(e, n=name, f=min_field, rs=refresh_status):
+            # Everything these handlers touch is bound as a default argument:
+            # a bare `min_field` here is a free variable resolved at call time,
+            # so every row ended up updating the last row's controls.
+            def on_min(e, n=name, f=min_field, rs=refresh_status, d=dot,
+                       rt=reading_txt, minf=min_field, maxf=max_field,
+                       err=range_error, validate=apply_validation):
                 state.targets[n]["min"] = parse_float(f, state.targets[n]["min"])
-                rs(); dot.update(); reading_txt.update()
-                apply_validation()
-                min_field.update(); max_field.update(); range_error.update()
+                rs(); d.update(); rt.update()
+                validate()
+                minf.update(); maxf.update(); err.update()
                 mark_dirty()
 
-            def on_max(e, n=name, f=max_field, rs=refresh_status):
+            def on_max(e, n=name, f=max_field, rs=refresh_status, d=dot,
+                       rt=reading_txt, minf=min_field, maxf=max_field,
+                       err=range_error, validate=apply_validation):
                 state.targets[n]["max"] = parse_float(f, state.targets[n]["max"])
-                rs(); dot.update(); reading_txt.update()
-                apply_validation()
-                min_field.update(); max_field.update(); range_error.update()
+                rs(); d.update(); rt.update()
+                validate()
+                minf.update(); maxf.update(); err.update()
                 mark_dirty()
 
             min_field.on_change = on_min
             max_field.on_change = on_max
-            min_field.on_blur = revert_on_blur(min_field, lambda n=name: state.targets[n]["min"])
-            max_field.on_blur = revert_on_blur(max_field, lambda n=name: state.targets[n]["max"])
             apply_validation()  # catch any pre-existing invalid data on open (no .update, unmounted)
 
             rows.append(
@@ -214,17 +292,18 @@ def build_parameters(
                 value=rule.get("op", "<"), width=110, label="is",
                 options=[ft.dropdown.Option(key=o, text=o) for o in _OPS],
             )
-            thr_field = ft.TextField(
+            thr_field = nf(
+                signed=True,  # a rule can trigger on a sub-zero temperature
                 value=str(rule.get("threshold", 0)), width=90, height=46, label="value",
-                text_size=14, keyboard_type=ft.KeyboardType.NUMBER,
+                text_size=14,
             )
             pump_dd = ft.Dropdown(
                 value=rule.get("pump", pump_names[0]), width=150, label="then dose",
                 options=[ft.dropdown.Option(key=p, text=p) for p in pump_names],
             )
-            amt_field = ft.TextField(
+            amt_field = nf(
                 value=str(rule.get("amount", 10)), width=90, height=46, label="ml",
-                text_size=14, keyboard_type=ft.KeyboardType.NUMBER,
+                text_size=14,
             )
             enabled_sw = ft.Switch(value=rule.get("enabled", True))
 
@@ -292,9 +371,9 @@ def build_parameters(
 
         def pump_row(name: str) -> ft.Control:
             pump = actuator_hub.pumps[name]
-            amount_field = ft.TextField(
+            amount_field = nf(
                 value="10", width=100, height=44, text_size=14,
-                suffix=ft.Text("ml"), keyboard_type=ft.KeyboardType.NUMBER,
+                suffix=ft.Text("ml"),
             )
 
             def dose(e, n=name, fld=amount_field):
@@ -348,12 +427,10 @@ def build_parameters(
         pump_cards = []
         for name in pump_names:
             cfg = state.pumps.setdefault(name, {"max_dose": actuator_hub.pumps[name].max_dose, "ml_per_s": 1.0})
-            max_f = ft.TextField(label="max dose (ml)", value=str(cfg["max_dose"]),
-                                 width=140, height=46, text_size=14,
-                                 keyboard_type=ft.KeyboardType.NUMBER)
-            mls_f = ft.TextField(label="ml / second", value=str(cfg.get("ml_per_s", 1.0)),
-                                 width=140, height=46, text_size=14,
-                                 keyboard_type=ft.KeyboardType.NUMBER)
+            max_f = nf(label="max dose (ml)", value=str(cfg["max_dose"]),
+                              width=140, height=46, text_size=14)
+            mls_f = nf(label="ml / second", value=str(cfg.get("ml_per_s", 1.0)),
+                              width=140, height=46, text_size=14)
 
             def on_max(e, n=name, f=max_f):
                 state.pumps[n]["max_dose"] = parse_float(f, state.pumps[n]["max_dose"]); mark_dirty()
@@ -381,9 +458,11 @@ def build_parameters(
         offset_fields = []
         for name, meta in _SENSOR_META.items():
             off = state.offsets.setdefault(name, 0.0)
-            f = ft.TextField(label=f"{name} offset ({meta['unit']})", value=str(off),
-                             width=180, height=46, text_size=14,
-                             keyboard_type=ft.KeyboardType.NUMBER)
+            # Offsets are the one field that routinely goes negative — a probe
+            # reading 0.3 high is corrected with -0.3.
+            f = nf(signed=True,
+                          label=f"{name} offset ({meta['unit']})", value=str(off),
+                          width=180, height=46, text_size=14)
 
             def on_off(e, n=name, fld=f):
                 state.offsets[n] = parse_float(fld, state.offsets[n]); mark_dirty()
@@ -391,17 +470,17 @@ def build_parameters(
             f.on_change = on_off
             offset_fields.append(f)
 
-        width_f = ft.TextField(
+        width_f = nf(
             label="Tank width (cm)", value=str(state.water_tank["width_cm"]),
-            width=160, height=46, text_size=14, keyboard_type=ft.KeyboardType.NUMBER,
+            width=160, height=46, text_size=14,
         )
-        length_f = ft.TextField(
+        length_f = nf(
             label="Tank length (cm)", value=str(state.water_tank["length_cm"]),
-            width=160, height=46, text_size=14, keyboard_type=ft.KeyboardType.NUMBER,
+            width=160, height=46, text_size=14,
         )
-        height_f = ft.TextField(
+        height_f = nf(
             label="Tank height (cm)", value=str(state.water_tank["height_cm"]),
-            width=160, height=46, text_size=14, keyboard_type=ft.KeyboardType.NUMBER,
+            width=160, height=46, text_size=14,
         )
         volume_text = ft.Text("", size=11, color=theme.TEXT_SECONDARY)
 
@@ -477,10 +556,9 @@ def build_parameters(
                 label="Stage name", value=stage["name"], width=160, height=46,
                 text_size=14,
             )
-            days_f = ft.TextField(
+            days_f = nf(
                 label="Duration (days)", value=str(stage["duration_days"]),
                 width=140, height=46, text_size=14,
-                keyboard_type=ft.KeyboardType.NUMBER,
             )
 
             def on_name(e, i=idx, f=name_f):
@@ -509,13 +587,15 @@ def build_parameters(
                 tgt = stage["targets"].setdefault(
                     sname, {"min": meta["min"], "max": meta["max"]}
                 )
-                min_f = ft.TextField(
+                min_f = nf(
+                    signed=True,
                     label=f"{sname} min", value=str(tgt["min"]), width=110,
-                    height=44, text_size=13, keyboard_type=ft.KeyboardType.NUMBER,
+                    height=44, text_size=13,
                 )
-                max_f = ft.TextField(
+                max_f = nf(
+                    signed=True,
                     label=f"{sname} max", value=str(tgt["max"]), width=110,
-                    height=44, text_size=13, keyboard_type=ft.KeyboardType.NUMBER,
+                    height=44, text_size=13,
                 )
 
                 def on_min(e, i=idx, s=sname, f=min_f):
@@ -564,9 +644,8 @@ def build_parameters(
 
         # -- add stage ---
         new_name_f = ft.TextField(label="Name", width=160, height=46, text_size=14)
-        new_days_f = ft.TextField(label="Duration (days)", value="7", width=140,
-                                   height=46, text_size=14,
-                                   keyboard_type=ft.KeyboardType.NUMBER)
+        new_days_f = nf(label="Duration (days)", value="7", width=140,
+                                height=46, text_size=14)
 
         def add_stage(e):
             try:
@@ -685,6 +764,9 @@ def build_parameters(
 
     def swap(name: str):
         current["name"] = name
+        # The outgoing section's fields are about to be discarded; only the
+        # incoming ones can be checked at save time.
+        live_num_fields.clear()
         section_host.content = _SECTIONS[name]()
         for btn in switcher.controls:
             selected = btn.data == name
@@ -711,19 +793,18 @@ def build_parameters(
 
     # -- save bar -----------------------------------------------------------
 
-    def invalid_target_sensors() -> list[str]:
-        """Pure data check across the active profile's targets — works no
-        matter which section is currently on screen (unlike the per-row
-        border/error UI in Setpoints, which only exists while that section's
-        controls are mounted)."""
-        bad = []
-        for sensor_name, rng in state.targets.items():
-            if rng.get("min", 0) >= rng.get("max", 0):
-                bad.append(sensor_name)
-        return bad
-
     def do_save(e):
-        bad = invalid_target_sensors()
+        # Text check first: a box reading "abc" leaves state valid (parse_float
+        # keeps the last good number), so this is the only guard that sees it.
+        not_numbers = [f for f in live_num_fields if not is_number(f.value)]
+        for f in live_num_fields:
+            f.border_color = "#C62828" if f in not_numbers else None
+            f.update()
+        if not_numbers:
+            _show_snack("Numbers only — fix the boxes outlined in red", "#C62828")
+            return
+
+        bad = invalid_target_sensors(state.targets)
         if bad:
             _show_snack(
                 f"Fix min/max first: {', '.join(bad)} (min must be less than max)",

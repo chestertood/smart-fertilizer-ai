@@ -6,6 +6,7 @@ Stdlib unittest only — no extra dependencies.
 
 import datetime
 import os
+import re
 import tempfile
 import unittest
 from unittest import mock
@@ -21,6 +22,9 @@ store._CONFIG_PATH = os.path.join(_TMP, "app_config.json")
 from config.sensors import get_status  # noqa: E402
 from config.profiles import AppState, DEFAULT_PROFILE  # noqa: E402
 from app.components.sensor_card import _bar_fraction  # noqa: E402
+from app.views.parameters import (  # noqa: E402
+    invalid_target_sensors, is_number, num_field,
+)
 from app.services.actuators import (  # noqa: E402
     ActuatorHub, CooldownError, DOSE_COOLDOWN_S,
 )
@@ -248,6 +252,103 @@ class TestDatabase(unittest.TestCase):
         row = self.db.recent_doses(1)[0]
         self.assertEqual(row["pump"], "Nutrient A")
         self.assertEqual(row["source"], "manual")
+
+
+class TestNumericInputFilter(unittest.TestCase):
+    """The Parameters page must not accept letters in fields that have to
+    parse as numbers — keyboard_type alone doesn't stop a physical keyboard
+    or a paste."""
+
+    @staticmethod
+    def _typed(field, text: str) -> str:
+        """What survives the filter: Flet maps InputFilter onto Flutter's
+        allow-formatter, which keeps every character the regex matches and
+        drops the rest."""
+        return "".join(re.findall(field.input_filter.regex_string, text))
+
+    def test_letters_are_dropped(self):
+        self.assertEqual(self._typed(num_field(), "12abc3"), "123")
+        self.assertEqual(self._typed(num_field(), "ABC"), "")
+        self.assertEqual(self._typed(num_field(signed=True), "-4a2"), "-42")
+
+    def test_real_numbers_pass_through(self):
+        for text in ("2.5", "0", "100", "6.20"):
+            self.assertEqual(self._typed(num_field(), text), text)
+
+    def test_signed_allows_minus_unsigned_strips_it(self):
+        # Calibration offsets legitimately go negative; millilitres don't.
+        self.assertEqual(self._typed(num_field(signed=True), "-0.3"), "-0.3")
+        self.assertEqual(self._typed(num_field(), "-5"), "5")
+
+    def test_partial_input_survives(self):
+        # parse_float()/revert_on_blur() rely on being able to clear a field
+        # and type through intermediate states.
+        for text in ("", "2.", "."):
+            self.assertEqual(self._typed(num_field(), text), text)
+
+
+class TestSaveBlocksNonNumericText(unittest.TestCase):
+    """do_save() refuses while any mounted numeric box holds non-numeric text.
+
+    This is the guard that catches letters: parse_float() keeps the last good
+    value when the text won't parse, so state stays valid and every
+    state-based check passes while the box still reads "abc".
+    """
+
+    def test_letters_are_not_numbers(self):
+        for text in ("abc", "12abc", "1.2.3", "--5", "", None, "."):
+            self.assertFalse(is_number(text), text)
+
+    def test_real_numbers_are(self):
+        for text in ("0", "2.5", "-0.3", "100", "6.20"):
+            self.assertTrue(is_number(text), text)
+
+    def test_save_blocked_when_a_box_holds_letters(self):
+        # Mirrors do_save()'s condition against a stand-in for the mounted
+        # fields, including the case that matters: state is still valid.
+        fields = [num_field(value="2.5"), num_field(value="abc")]
+        not_numbers = [f for f in fields if not is_number(f.value)]
+        self.assertEqual(len(not_numbers), 1)
+        self.assertEqual(invalid_target_sensors({"EC": {"min": 0.5, "max": 4.0}}), [])
+
+    def test_save_allowed_when_every_box_is_numeric(self):
+        fields = [num_field(value="2.5"), num_field(signed=True, value="-0.3")]
+        self.assertEqual([f for f in fields if not is_number(f.value)], [])
+
+    def test_letters_survive_until_save_sees_them(self):
+        # Setpoints used to wire an on_blur that rewrote an unparseable box
+        # back to the last good number. Clicking Save blurs the field first,
+        # so the guard only ever saw the reverted value and saved happily.
+        # Nothing may quietly repair the text before do_save() reads it.
+        field = num_field(value="2.5")
+        field.value = "abc"          # what the operator typed
+        self.assertIsNone(field.on_blur)
+        self.assertFalse(is_number(field.value))
+
+
+class TestSaveGuard(unittest.TestCase):
+    """do_save() refuses when invalid_target_sensors() reports anything."""
+
+    def test_good_range_saves(self):
+        self.assertEqual(invalid_target_sensors({"EC": {"min": 0.5, "max": 4.0}}), [])
+
+    def test_min_not_below_max_blocks(self):
+        self.assertEqual(invalid_target_sensors({"EC": {"min": 4.0, "max": 4.0}}), ["EC"])
+        self.assertEqual(invalid_target_sensors({"EC": {"min": 9.0, "max": 1.0}}), ["EC"])
+
+    def test_letters_block_instead_of_crashing(self):
+        # Only reachable via a hand-edited app_config.json. Comparing "abc"
+        # to a float used to raise TypeError straight out of do_save.
+        self.assertEqual(invalid_target_sensors({"EC": {"min": "abc", "max": 4.0}}), ["EC"])
+        self.assertEqual(invalid_target_sensors({"PH": {"min": 1.0, "max": "x"}}), ["PH"])
+
+    def test_numeric_strings_are_fine(self):
+        # json only ever holds numbers here, but a "2.5" shouldn't block save.
+        self.assertEqual(invalid_target_sensors({"EC": {"min": "0.5", "max": "4.0"}}), [])
+
+    def test_missing_and_none_block(self):
+        self.assertEqual(invalid_target_sensors({"EC": {"min": 0.5}}), ["EC"])
+        self.assertEqual(invalid_target_sensors({"EC": {"min": None, "max": 4.0}}), ["EC"])
 
 
 if __name__ == "__main__":
