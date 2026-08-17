@@ -89,5 +89,27 @@ class TestChatHistory(unittest.TestCase):
         )
 
 
+class TestBuildRequests(unittest.TestCase):
+    def test_get_updates_url(self):
+        url = telegram_bridge._get_updates_url("TOKEN123", offset=42)
+        self.assertEqual(
+            url,
+            "https://api.telegram.org/botTOKEN123/getUpdates"
+            "?timeout=30&offset=42",
+        )
+
+    def test_get_updates_url_no_offset(self):
+        url = telegram_bridge._get_updates_url("TOKEN123", offset=None)
+        self.assertEqual(
+            url, "https://api.telegram.org/botTOKEN123/getUpdates?timeout=30"
+        )
+
+    def test_send_message_url(self):
+        url = telegram_bridge._send_message_url("TOKEN123")
+        self.assertEqual(
+            url, "https://api.telegram.org/botTOKEN123/sendMessage"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

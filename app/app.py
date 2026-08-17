@@ -15,6 +15,7 @@ from app.views.dashboard import build_dashboard
 from app.views.history import build_history
 from app.views.parameters import build_parameters
 from app.views.settings_view import build_settings
+from app.services import telegram_bridge
 from app.services.hardware import SensorHub
 from app.services.actuators import ActuatorHub
 from app.services.database import Database
@@ -184,16 +185,20 @@ def main(page: ft.Page) -> None:
         icon_color=theme.DANGER,
         tooltip=t("nav.exit", state.language),
         on_click=open_exit_dialog,
+        style=ft.ButtonStyle(side=ft.BorderSide(0, "transparent")),
     )
     if KIOSK:
         rail.expand = True
+        rail_width = 96  # matches NavigationRail's rendered width in ALL-label mode
         nav_side: ft.Control = ft.Column(
+            width=rail_width,
             spacing=0,
             controls=[
                 rail,
                 ft.Container(
+                    width=rail_width,
                     bgcolor=theme.NAV_BG,
-                    padding=ft.Padding(left=20, right=0, top=4, bottom=15),
+                    padding=ft.Padding(left=0, right=0, top=4, bottom=15),
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.CENTER,
                         controls=[exit_button],
@@ -302,4 +307,5 @@ def main(page: ft.Page) -> None:
     page.run_task(poll_sensors)
     page.run_task(poll_connectivity)
     page.run_task(poll_clock)
+    page.run_task(telegram_bridge.poll_telegram, state)
     
