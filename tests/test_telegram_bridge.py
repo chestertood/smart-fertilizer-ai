@@ -111,5 +111,58 @@ class TestBuildRequests(unittest.TestCase):
         )
 
 
+class TestStatusSummary(unittest.TestCase):
+    def test_no_readings_yet(self):
+        self.assertEqual(
+            telegram_bridge.status_summary({}, {}, 10.0), "No sensor data yet"
+        )
+
+    def test_formats_known_sensors_with_target_status(self):
+        readings = {"EC": 2.1, "PH": 6.2, "Temperature": 24.5, "Humidity": 65.0}
+        targets = {
+            "EC": {"min": 1.5, "max": 2.5},
+            "PH": {"min": 5.5, "max": 6.5},
+            "Temperature": {"min": 18.0, "max": 28.0},
+            "Humidity": {"min": 40.0, "max": 80.0},
+        }
+        out = telegram_bridge.status_summary(readings, targets, 40.0)
+        self.assertIn("EC: 2.10 mS/cm", out)
+        self.assertIn("PH: 6.20 pH", out)
+        self.assertIn("Tank ~40.0 L", out)
+
+    def test_missing_value_reported_as_no_data(self):
+        out = telegram_bridge.status_summary({"EC": 2.1}, {}, 10.0)
+        self.assertIn("Temperature: no data", out)
+
+
+class TestReplyKeyboard(unittest.TestCase):
+    def test_contains_both_buttons(self):
+        kb = telegram_bridge.reply_keyboard()
+        buttons = [b for row in kb["keyboard"] for b in row]
+        self.assertIn("Check status", buttons)
+        self.assertIn("Recommend dosing", buttons)
+        self.assertTrue(kb["resize_keyboard"])
+
+
+class TestFormatRecommendation(unittest.TestCase):
+    def test_no_actions_needed(self):
+        result = {"summary": "All good.", "actions": []}
+        out = telegram_bridge.format_recommendation(result)
+        self.assertIn("All good.", out)
+        self.assertIn("no dosing needed", out.lower())
+
+    def test_actions_listed_with_pointer_to_app(self):
+        result = {
+            "summary": "EC is low.",
+            "actions": [{"pump": "Nutrient A", "amount_ml": 12.5, "reason": "raise EC"}],
+        }
+        out = telegram_bridge.format_recommendation(result)
+        self.assertIn("EC is low.", out)
+        self.assertIn("Nutrient A", out)
+        self.assertIn("12.5", out)
+        self.assertIn("raise EC", out)
+        self.assertIn("open the app", out.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

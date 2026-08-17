@@ -60,6 +60,57 @@ class ChatHistory:
         return list(self._by_chat.get(chat_id, []))
 
 
+_UNITS = {"EC": "mS/cm", "PH": "pH", "Temperature": "°C", "Humidity": "%"}
+
+
+def status_summary(readings: dict, targets: dict, tank_liters: float) -> str:
+    """Instant, local sensor summary — no LLM call, mirrors chat_widget.py's
+    "Check status" quick action so the Telegram button behaves identically."""
+    from config.sensors import get_status
+
+    if not readings:
+        return "No sensor data yet"
+    lines = []
+    for name in ("EC", "PH", "Temperature", "Humidity"):
+        val = readings.get(name)
+        if not isinstance(val, (int, float)) or val != val:
+            lines.append(f"{name}: no data")
+            continue
+        tgt = targets.get(name, {})
+        if tgt:
+            label, _ = get_status(val, tgt["min"], tgt["max"])
+            lines.append(f"{name}: {val:.2f} {_UNITS.get(name, '')} — {label}")
+        else:
+            lines.append(f"{name}: {val:.2f} {_UNITS.get(name, '')}")
+    lines.append(f"Tank ~{tank_liters:.1f} L")
+    return "\n".join(lines)
+
+
+def format_recommendation(result: dict) -> str:
+    """Render an llm_agent.recommend() result as plain text. Telegram v1 has
+    no approve/reject UI (spec: approval stays in-app), so a proposed dose
+    is listed as text with a pointer back to the app — never applied here."""
+    lines = [result.get("summary", "")]
+    actions = result.get("actions", [])
+    if not actions:
+        lines.append("All values within target — no dosing needed")
+    else:
+        for a in actions:
+            lines.append(f"• {a['pump']}: {a['amount_ml']} ml — {a['reason']}")
+        lines.append(_PROPOSAL_NOTE.strip())
+    return "\n".join(line for line in lines if line)
+
+
+def reply_keyboard() -> dict:
+    """Telegram reply_markup: a persistent 2-button keyboard under the text
+    field, mirroring chat_widget.py's "Check status" / "Recommend dosing"
+    quick-action chips."""
+    return {
+        "keyboard": [["Check status", "Recommend dosing"]],
+        "resize_keyboard": True,
+    }
+
+
 def _get_updates_url(token: str, offset: int | None) -> str:
     url = f"https://api.telegram.org/bot{token}/getUpdates?timeout=30"
     if offset is not None:
@@ -117,27 +168,57 @@ async def poll_telegram(state) -> None:
                         )
                         continue
 
-                    history.append(chat_id, "user", text)
-                    try:
-                        result = await asyncio.get_event_loop().run_in_executor(
-                            None, llm_agent.chat, history.get(chat_id),
+                    if text == "/start":
+                        # Welcome + menu only — no LLM call, matches the
+                        # in-app chat's opening bubble.
+                        reply_text = "Hi! Tap a button below or ask me anything."
+                    elif text == "Check status":
+                        # Instant, local — no LLM call, mirrors the in-app
+                        # "Check status" quick action exactly.
+                        reply_text = status_summary(
                             dict(state.last_readings), state.targets,
-                            state.active_profile, state.tank_capacity_liters(),
-                            state.language, state.llm_model,
-                            list(state.growth_config()["stages"]),
+                            state.tank_capacity_liters(),
                         )
-                        reply_text = format_reply(result)
-                    except llm_agent.LLMError as exc:
-                        reply_text = f"⚠ {exc}"
-                    except Exception:
-                        logger.exception("Telegram chat() call failed")
-                        reply_text = "⚠ Unexpected error handling your message."
+                    elif text == "Recommend dosing":
+                        try:
+                            result = await asyncio.get_event_loop().run_in_executor(
+                                None, llm_agent.recommend,
+                                dict(state.last_readings), state.targets,
+                                state.active_profile, state.tank_capacity_liters(),
+                                state.language, state.llm_model,
+                            )
+                            reply_text = format_recommendation(result)
+                        except llm_agent.LLMError as exc:
+                            reply_text = f"⚠ {exc}"
+                        except Exception:
+                            logger.exception("Telegram recommend() call failed")
+                            reply_text = "⚠ Unexpected error handling your message."
                     else:
-                        history.append(chat_id, "assistant", result["text"])
+                        history.append(chat_id, "user", text)
+                        try:
+                            result = await asyncio.get_event_loop().run_in_executor(
+                                None, llm_agent.chat, history.get(chat_id),
+                                dict(state.last_readings), state.targets,
+                                state.active_profile, state.tank_capacity_liters(),
+                                state.language, state.llm_model,
+                                list(state.growth_config()["stages"]),
+                            )
+                            reply_text = format_reply(result)
+                        except llm_agent.LLMError as exc:
+                            reply_text = f"⚠ {exc}"
+                        except Exception:
+                            logger.exception("Telegram chat() call failed")
+                            reply_text = "⚠ Unexpected error handling your message."
+                        else:
+                            history.append(chat_id, "assistant", result["text"])
 
                     await client.post(
                         _send_message_url(token),
-                        json={"chat_id": chat_id, "text": reply_text},
+                        json={
+                            "chat_id": chat_id,
+                            "text": reply_text,
+                            "reply_markup": reply_keyboard(),
+                        },
                     )
             except Exception:
                 logger.exception("Telegram poll iteration failed")
