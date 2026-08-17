@@ -32,5 +32,31 @@ class TestIsAllowed(unittest.TestCase):
         self.assertFalse(telegram_bridge.is_allowed(123, set()))
 
 
+class TestFormatReply(unittest.TestCase):
+    def test_plain_text_passthrough(self):
+        result = {"text": "EC looks fine.", "param_proposal": None, "growth_proposal": None}
+        self.assertEqual(telegram_bridge.format_reply(result), "EC looks fine.")
+
+    def test_param_proposal_appends_pointer(self):
+        result = {
+            "text": "I'd suggest tightening the EC range.",
+            "param_proposal": {"crop": "lettuce"},
+            "growth_proposal": None,
+        }
+        out = telegram_bridge.format_reply(result)
+        self.assertIn("I'd suggest tightening the EC range.", out)
+        self.assertIn("open the app", out.lower())
+
+    def test_growth_proposal_appends_pointer(self):
+        result = {
+            "text": "Here's a 4-stage plan.",
+            "param_proposal": None,
+            "growth_proposal": {"crop": "lettuce", "stages": []},
+        }
+        out = telegram_bridge.format_reply(result)
+        self.assertIn("Here's a 4-stage plan.", out)
+        self.assertIn("open the app", out.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
