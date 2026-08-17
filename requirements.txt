@@ -25,6 +25,9 @@ anthropic
 # Loads ANTHROPIC_API_KEY from the .env file
 python-dotenv
 
+# Renders the "Check status" PNG infographic sent via Telegram
+Pillow>=10.1
+
 # Note: data logging (sqlite3), JSON config, asyncio, etc. all use the
 # Python standard library — no extra packages needed.
 
@@ -32,7 +35,6 @@ python-dotenv
 # These are skipped on Windows/dev (the code falls back to simulated sensors
 # and pumps). Uncomment on the Pi, or:  pip install -r requirements.txt
 #
-# smbus2                          # Atlas Scientific EZO EC/pH over I2C
-# adafruit-circuitpython-dht      # DHT22 temperature/humidity
-# adafruit-blinka                 # CircuitPython 'board' support on the Pi
-# gpiozero                        # Relay-driven dosing pumps (RelayPump)
+# minimalmodbus                   # EC/pH (MAX485) + SenseCAP CO2/temp/humidity
+#                                 # (USB-RS485) over Modbus RTU; pulls pyserial
+# gpiozero                        # Relay-driven dosing pumps, MAX485 DE/RE pins

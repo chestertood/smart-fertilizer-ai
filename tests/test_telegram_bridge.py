@@ -164,5 +164,47 @@ class TestFormatRecommendation(unittest.TestCase):
         self.assertIn("open the app", out.lower())
 
 
+class TestStatusImage(unittest.TestCase):
+    def _readings(self):
+        return {"EC": 2.1, "PH": 6.0, "Temperature": 24.5, "Humidity": 65.0}
+
+    def _targets(self):
+        return {
+            "EC": {"min": 1.5, "max": 2.5},
+            "PH": {"min": 5.5, "max": 6.5},
+            "Temperature": {"min": 18.0, "max": 28.0},
+            "Humidity": {"min": 40.0, "max": 80.0},
+        }
+
+    def test_returns_valid_png(self):
+        from io import BytesIO
+        from PIL import Image
+        png_bytes = telegram_bridge.status_image(self._readings(), self._targets())
+        self.assertGreater(len(png_bytes), 0)
+        img = Image.open(BytesIO(png_bytes))
+        self.assertEqual(img.format, "PNG")
+
+    def test_dimensions_are_2x2_grid(self):
+        from io import BytesIO
+        from PIL import Image
+        png_bytes = telegram_bridge.status_image(self._readings(), self._targets())
+        img = Image.open(BytesIO(png_bytes))
+        self.assertEqual(img.size, (832, 472))
+
+    def test_missing_reading_does_not_crash(self):
+        from io import BytesIO
+        from PIL import Image
+        readings = {"EC": 2.1, "PH": 6.0}  # Temperature/Humidity absent
+        png_bytes = telegram_bridge.status_image(readings, self._targets())
+        Image.open(BytesIO(png_bytes)).load()  # round-trips without error
+
+    def test_empty_readings_still_renders(self):
+        from io import BytesIO
+        from PIL import Image
+        png_bytes = telegram_bridge.status_image({}, {})
+        img = Image.open(BytesIO(png_bytes))
+        self.assertEqual(img.size, (832, 472))
+
+
 if __name__ == "__main__":
     unittest.main()
