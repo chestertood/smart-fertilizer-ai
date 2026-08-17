@@ -37,3 +37,21 @@ def format_reply(result: dict) -> str:
     if result.get("param_proposal") or result.get("growth_proposal"):
         text += _PROPOSAL_NOTE
     return text
+
+
+class ChatHistory:
+    """In-memory, per-chat message history. Resets on app restart — v1
+    doesn't persist Telegram conversations (see design spec, Scope)."""
+
+    def __init__(self, max_messages: int = 20) -> None:
+        self._max = max_messages
+        self._by_chat: dict[int, list[dict]] = {}
+
+    def append(self, chat_id: int, role: str, content) -> None:
+        messages = self._by_chat.setdefault(chat_id, [])
+        messages.append({"role": role, "content": content})
+        if len(messages) > self._max:
+            del messages[: len(messages) - self._max]
+
+    def get(self, chat_id: int) -> list[dict]:
+        return list(self._by_chat.get(chat_id, []))
