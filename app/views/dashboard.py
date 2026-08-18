@@ -141,6 +141,56 @@ def build_dashboard(
 
     growth_bar = build_growth_bar()
 
+    def build_tank_card() -> ft.Control:
+        """Static reservoir capacity card — fills the free space below the
+        sensor grid. Capacity is derived from tank dimensions in Settings;
+        there's no water-level sensor, so this shows total volume, not fill."""
+        t_dims = state.water_tank
+        return theme.card(
+            content=ft.Row(
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=8,
+                controls=[
+                    ft.Container(
+                        bgcolor=theme.PRIMARY,
+                        border_radius=10,
+                        padding=8,
+                        content=ft.Icon(ft.Icons.PROPANE_TANK, color="#FFFFFF", size=22),
+                    ),
+                    ft.Column(
+                        spacing=0,
+                        tight=True,
+                        controls=[
+                            ft.Text(
+                                t("dashboard.tank_capacity", lang),
+                                size=14, weight=ft.FontWeight.W_600, color=theme.TEXT,
+                            ),
+                            ft.Text(
+                                t("dashboard.tank_dims", lang).format(
+                                    w=t_dims["width_cm"], l=t_dims["length_cm"], h=t_dims["height_cm"]
+                                ),
+                                size=11, color=theme.TEXT_MUTED,
+                            ),
+                        ],
+                    ),
+                    ft.Container(expand=True),
+                    ft.Row(
+                        vertical_alignment=ft.CrossAxisAlignment.END,
+                        spacing=4,
+                        controls=[
+                            ft.Text(
+                                f"{state.tank_capacity_liters():.1f}",
+                                size=28, weight=ft.FontWeight.BOLD, color=theme.PRIMARY,
+                            ),
+                            ft.Text("L", size=13, color=theme.TEXT_MUTED),
+                        ],
+                    ),
+                ],
+            ),
+        )
+
+    tank_card = build_tank_card()
+
     container = ft.Container(
         expand=True,
         padding=theme.PAGE_PADDING,
@@ -155,6 +205,7 @@ def build_dashboard(
                 ),
                 *([growth_bar] if growth_bar else []),
                 cards,
+                tank_card,
             ],
         ),
     )

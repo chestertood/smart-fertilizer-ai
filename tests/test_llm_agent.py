@@ -25,6 +25,16 @@ class TestThinkingGate(unittest.TestCase):
         self.assertTrue(llm_agent._ADAPTIVE_MODELS <= offered)
 
 
+class TestDefaultModel(unittest.TestCase):
+    def test_config_defaults_match_llm_agent(self):
+        # Three places name a default model; if they drift, the config layer
+        # silently wins and the app runs on a model nobody picked.
+        from config import store
+        self.assertEqual(store._defaults()["llm_model"], llm_agent.DEFAULT_MODEL)
+        self.assertIn(llm_agent.DEFAULT_MODEL,
+                      {m[0] for m in llm_agent.AVAILABLE_MODELS})
+
+
 class TestKnowledgeBlock(unittest.TestCase):
     def test_seed_is_injected(self):
         block = llm_agent._knowledge_block()

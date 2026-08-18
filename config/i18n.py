@@ -29,6 +29,8 @@ _STRINGS = {
     "dashboard.subtitle": {EN: "Real-time monitoring", TH: "ติดตามผลแบบเรียลไทม์"},
     "dashboard.online":   {EN: "Online", TH: "ออนไลน์"},
     "dashboard.offline":  {EN: "Offline", TH: "ออฟไลน์"},
+    "dashboard.tank_capacity": {EN: "Tank Capacity", TH: "ความจุถัง"},
+    "dashboard.tank_dims": {EN: "{w}×{l}×{h} cm reservoir", TH: "ถังขนาด {w}×{l}×{h} ซม."},
 
     "parameters.title": {EN: "Parameters", TH: "พารามิเตอร์"},
     "parameters.section.setpoints":    {EN: "Setpoints", TH: "ค่าตั้งต้น"},

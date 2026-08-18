@@ -32,32 +32,6 @@ class TestIsAllowed(unittest.TestCase):
         self.assertFalse(telegram_bridge.is_allowed(123, set()))
 
 
-class TestFormatReply(unittest.TestCase):
-    def test_plain_text_passthrough(self):
-        result = {"text": "EC looks fine.", "param_proposal": None, "growth_proposal": None}
-        self.assertEqual(telegram_bridge.format_reply(result), "EC looks fine.")
-
-    def test_param_proposal_appends_pointer(self):
-        result = {
-            "text": "I'd suggest tightening the EC range.",
-            "param_proposal": {"crop": "lettuce"},
-            "growth_proposal": None,
-        }
-        out = telegram_bridge.format_reply(result)
-        self.assertIn("I'd suggest tightening the EC range.", out)
-        self.assertIn("open the app", out.lower())
-
-    def test_growth_proposal_appends_pointer(self):
-        result = {
-            "text": "Here's a 4-stage plan.",
-            "param_proposal": None,
-            "growth_proposal": {"crop": "lettuce", "stages": []},
-        }
-        out = telegram_bridge.format_reply(result)
-        self.assertIn("Here's a 4-stage plan.", out)
-        self.assertIn("open the app", out.lower())
-
-
 class TestChatHistory(unittest.TestCase):
     def test_get_unknown_chat_is_empty(self):
         history = telegram_bridge.ChatHistory(max_messages=10)
@@ -151,17 +125,98 @@ class TestFormatRecommendation(unittest.TestCase):
         self.assertIn("All good.", out)
         self.assertIn("no dosing needed", out.lower())
 
-    def test_actions_listed_with_pointer_to_app(self):
+    def test_actions_omitted_detail_goes_to_separate_messages(self):
+        # Per-action detail now lives in format_dose_proposal, sent as its
+        # own approval message — the summary line stays action-free.
         result = {
             "summary": "EC is low.",
             "actions": [{"pump": "Nutrient A", "amount_ml": 12.5, "reason": "raise EC"}],
         }
         out = telegram_bridge.format_recommendation(result)
         self.assertIn("EC is low.", out)
+        self.assertNotIn("Nutrient A", out)
+        self.assertNotIn("no dosing needed", out.lower())
+
+
+class TestPendingProposals(unittest.TestCase):
+    def test_register_returns_unique_ids(self):
+        pending = telegram_bridge.PendingProposals()
+        pid1 = pending.register("dose", {"pump": "A"}, chat_id=1)
+        pid2 = pending.register("dose", {"pump": "B"}, chat_id=1)
+        self.assertNotEqual(pid1, pid2)
+
+    def test_get_returns_registered_record(self):
+        pending = telegram_bridge.PendingProposals()
+        pid = pending.register("param", {"crop": "lettuce"}, chat_id=42)
+        record = pending.get(pid)
+        self.assertEqual(record["kind"], "param")
+        self.assertEqual(record["data"], {"crop": "lettuce"})
+        self.assertEqual(record["chat_id"], 42)
+
+    def test_get_unknown_id_is_none(self):
+        pending = telegram_bridge.PendingProposals()
+        self.assertIsNone(pending.get("nope"))
+
+    def test_pop_removes_record(self):
+        pending = telegram_bridge.PendingProposals()
+        pid = pending.register("dose", {"pump": "A"}, chat_id=1)
+        first = pending.pop(pid)
+        second = pending.pop(pid)
+        self.assertIsNotNone(first)
+        self.assertIsNone(second)  # second tap: already handled
+
+
+class TestApprovalKeyboard(unittest.TestCase):
+    def test_has_approve_and_reject_with_matching_pid(self):
+        kb = telegram_bridge.approval_keyboard("7")
+        buttons = kb["inline_keyboard"][0]
+        self.assertEqual(buttons[0]["callback_data"], "approve:7")
+        self.assertEqual(buttons[1]["callback_data"], "reject:7")
+
+
+class TestFormatDoseProposal(unittest.TestCase):
+    def test_includes_pump_amount_and_reason(self):
+        out = telegram_bridge.format_dose_proposal(
+            {"pump": "Nutrient A", "amount_ml": 12.5, "reason": "raise EC"}
+        )
         self.assertIn("Nutrient A", out)
         self.assertIn("12.5", out)
         self.assertIn("raise EC", out)
-        self.assertIn("open the app", out.lower())
+
+
+class TestFormatParamProposal(unittest.TestCase):
+    def test_includes_crop_and_ranges(self):
+        proposal = {
+            "crop": "lettuce",
+            "targets": {"EC": {"min": 1.5, "max": 2.5}, "PH": {"min": 5.5, "max": 6.5}},
+        }
+        out = telegram_bridge.format_param_proposal(proposal)
+        self.assertIn("lettuce", out)
+        self.assertIn("1.5", out)
+        self.assertIn("2.5", out)
+        self.assertIn("mS/cm", out)
+
+    def test_missing_sensor_omitted(self):
+        proposal = {"crop": "lettuce", "targets": {"EC": {"min": 1.5, "max": 2.5}}}
+        out = telegram_bridge.format_param_proposal(proposal)
+        self.assertNotIn("Temperature", out)
+
+
+class TestFormatGrowthProposal(unittest.TestCase):
+    def test_includes_crop_and_stage_names(self):
+        proposal = {
+            "crop": "lettuce",
+            "stages": [
+                {"name": "Seedling", "duration_days": 10,
+                 "targets": {"EC": {"min": 0.8, "max": 1.2}}},
+                {"name": "Vegetative", "duration_days": 20, "targets": {}},
+            ],
+        }
+        out = telegram_bridge.format_growth_proposal(proposal)
+        self.assertIn("lettuce", out)
+        self.assertIn("Seedling", out)
+        self.assertIn("10 days", out)
+        self.assertIn("Vegetative", out)
 
 
 class TestStatusImage(unittest.TestCase):

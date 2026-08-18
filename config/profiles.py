@@ -68,7 +68,7 @@ class AppState:
         # UI language: "en" or "th" (see config.i18n.t()).
         self.language: str = cfg.get("language", "en")
         # Claude model for the chat assistant (see llm_agent.AVAILABLE_MODELS).
-        self.llm_model: str = cfg.get("llm_model", "claude-opus-4-8")
+        self.llm_model: str = cfg.get("llm_model", "claude-sonnet-5")
         # Last sensor snapshot, kept fresh by the poll loop so any view (and
         # the LLM advisor) can read current values without its own polling.
         # Not persisted.

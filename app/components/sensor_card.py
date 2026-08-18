@@ -40,10 +40,10 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
         content=status_text,
     )
     value_text = ft.Text(
-        f"{value:.1f}", size=36, weight=ft.FontWeight.BOLD, color=badge_fg
+        f"{value:.1f}", size=52, weight=ft.FontWeight.BOLD, color=badge_fg
     )
     progress_bar = ft.ProgressBar(
-        value=progress, color=s_color, bgcolor="#ECEFEC", height=8, border_radius=4
+        value=progress, color=s_color, bgcolor="#ECEFEC", height=12, border_radius=6
     )
     range_text = ft.Text(
         f"{t('sensor.target', lang)} {lo}–{hi} {sensor['unit']}",
@@ -52,8 +52,9 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
 
     container = theme.card(
         col={"xs": 12, "sm": 6},
+        padding=22,
         content=ft.Column(
-            spacing=10,
+            spacing=16,
             tight=True,
             controls=[
                 ft.Row(
@@ -63,12 +64,12 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
                         ft.Container(
                             bgcolor=sensor["color"],
                             border_radius=10,
-                            padding=8,
-                            content=ft.Icon(sensor["icon"], color="#FFFFFF", size=22),
+                            padding=10,
+                            content=ft.Icon(sensor["icon"], color="#FFFFFF", size=26),
                         ),
                         ft.Text(
                             t(f"sensor.name.{sensor['name']}", lang),
-                            size=14,
+                            size=16,
                             weight=ft.FontWeight.W_600,
                             color=theme.TEXT,
                             expand=True,
@@ -81,7 +82,7 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
                     spacing=4,
                     controls=[
                         value_text,
-                        ft.Text(sensor["unit"], size=13, color=theme.TEXT_MUTED),
+                        ft.Text(sensor["unit"], size=14, color=theme.TEXT_MUTED),
                     ],
                 ),
                 progress_bar,

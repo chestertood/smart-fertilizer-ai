@@ -13,7 +13,7 @@ PRIMARY_DARK = "#1B5E20"
 PRIMARY_LIGHT = "#E8F5E9"  # tinted fills: badges, bot bubbles, selected chips
 NAV_BG = "#F1F8E9"
 
-BG = "#F4F6F4"             # page background behind cards
+BG = "#E4E9E4"             # page background behind cards
 SURFACE = "#FFFFFF"        # card background
 BORDER = "#E4E9E4"         # hairline card border
 

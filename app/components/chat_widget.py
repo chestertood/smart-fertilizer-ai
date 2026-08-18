@@ -317,31 +317,6 @@ def build_chat_widget(
         attach_btn.disabled = on
         page.update()
 
-    # -- model picker ---------------------------------------------------------
-    # Compact, Claude-style: sits in the input bar, persists to app config.
-
-    def on_model_select(e) -> None:
-        state.llm_model = e.control.value
-        state.save()
-
-    model_dd = ft.Dropdown(
-        value=state.llm_model,
-        options=[
-            ft.dropdown.Option(key=mid, text=label)
-            for mid, label, _desc in llm_agent.AVAILABLE_MODELS
-        ],
-        on_select=on_model_select,
-        width=130,
-        dense=True,
-        text_size=11,
-        border=ft.InputBorder.NONE,
-        content_padding=ft.Padding(left=8, right=0, top=0, bottom=0),
-    )
-    # Saved model no longer offered (e.g. renamed in an update) — fall back.
-    if state.llm_model not in {m[0] for m in llm_agent.AVAILABLE_MODELS}:
-        state.llm_model = llm_agent.DEFAULT_MODEL
-        model_dd.value = state.llm_model
-
     # -- attachments ----------------------------------------------------------
 
     attach_row = ft.Row(wrap=True, spacing=6, run_spacing=6, visible=False)
@@ -467,13 +442,17 @@ def build_chat_widget(
         spacing=6,
         run_spacing=6,
         controls=[
+            # Material icons instead of emoji glyphs: they ship inside Flutter,
+            # so they render on the Pi, which has no color-emoji font by default.
             ft.OutlinedButton(
-                "📊 Check status",
+                "Check status",
+                icon=ft.Icons.INSIGHTS,
                 on_click=do_status,
                 style=ft.ButtonStyle(color=_PRIMARY_DARK),
             ),
             ft.OutlinedButton(
-                "💧 Recommend dosing",
+                "Recommend dosing",
+                icon=ft.Icons.WATER_DROP,
                 on_click=lambda e: page.run_task(do_recommend),
                 style=ft.ButtonStyle(color=_PRIMARY_DARK),
             ),
@@ -577,7 +556,7 @@ def build_chat_widget(
                     content=chips,
                 ),
                 # composer — Claude-style: staged attachments above a rounded
-                # input card; attach button + model picker + send inside it.
+                # input card; attach button + send inside it.
                 ft.Container(
                     padding=ft.Padding(left=10, right=10, top=4, bottom=10),
                     content=ft.Column(
@@ -597,7 +576,6 @@ def build_chat_widget(
                                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                             controls=[
                                                 attach_btn,
-                                                model_dd,
                                                 ft.Container(expand=True),
                                                 send_btn,
                                             ],

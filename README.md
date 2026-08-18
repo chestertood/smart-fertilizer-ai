@@ -63,7 +63,7 @@ Every physical I/O path (`Sensor`, `Actuator`) has a real implementation *and* a
 
 Supported real hardware:
 - **Atlas Scientific EZO-EC / EZO-pH** over I2C
-- **DHT22** temperature + humidity sensor
+- **SenseCAP CO2/Temperature/Humidity (S-CO2-02B)** over RS485 Modbus RTU via a USB-RS485 adapter
 - **GPIO relay-driven** peristaltic dosing pumps
 
 ## Getting Started
@@ -97,14 +97,14 @@ FLET_VIEW=web python main.py
 
 ### On a Raspberry Pi
 
-Uncomment the hardware section in `requirements.txt` (`smbus2`, `adafruit-circuitpython-dht`, `adafruit-blinka`, `gpiozero`) and install. The app will automatically use real sensors/pumps instead of simulation.
+Uncomment the hardware section in `requirements.txt` (`minimalmodbus`, `gpiozero`) and install. The app will automatically use real sensors/pumps instead of simulation.
 
 ## Tech Stack
 
 - **UI:** [Flet](https://flet.dev) (Flutter-backed Python UI framework)
 - **AI:** [Anthropic Claude](https://www.anthropic.com) via structured tool-use
 - **Storage:** SQLite (sensor history + dosing events), JSON (user config)
-- **Hardware:** I2C (Atlas Scientific EZO), GPIO (relays), DHT22
+- **Hardware:** RS485 Modbus RTU (EC/pH probes, SenseCAP CO2/temp/humidity), GPIO (relays)
 
 ## Roadmap
 
