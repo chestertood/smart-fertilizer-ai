@@ -13,7 +13,10 @@ import json
 import logging
 import os
 
+import flet as ft
 import httpx
+
+from app import theme
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +89,17 @@ def approval_keyboard(pid: str) -> dict:
             ]
         ]
     }
+
+
+def _toast(page, msg: str, color: str) -> None:
+    """In-app feedback for a Telegram-triggered change. Mirrors
+    app/views/parameters.py's _show_snack — this Flet build has no
+    page.open()/show_snack_bar(), so the SnackBar is driven via
+    page.overlay directly."""
+    sb = ft.SnackBar(content=ft.Text(msg), bgcolor=color)
+    page.overlay.append(sb)
+    sb.open = True
+    page.update()
 
 
 _UNITS = {"EC": "mS/cm", "PH": "pH", "Temperature": "°C", "Humidity": "%"}
@@ -329,6 +343,16 @@ async def poll_telegram(state, actuator_hub, db, page, refresh_view) -> None:
                 await answer("Rejected")
                 return
 
+            # Approve path only (reject makes no state change, handled
+            # above). Give immediate feedback on both ends before the
+            # apply logic runs, so a tap never looks like nothing happened.
+            await client.post(
+                _edit_message_url(token),
+                json={"chat_id": chat_id, "message_id": message_id,
+                      "text": "⏳ Applying…"},
+            )
+            _toast(page, "Telegram: applying…", theme.TEXT_MUTED)
+
             kind, data = record["kind"], record["data"]
             try:
                 if kind == "dose":
@@ -376,6 +400,11 @@ async def poll_telegram(state, actuator_hub, db, page, refresh_view) -> None:
                 json={"chat_id": chat_id, "message_id": message_id,
                       "text": result_text},
             )
+            _toast(
+                page, f"Telegram: {result_text}",
+                theme.DANGER if result_text.startswith("⚠") else theme.SUCCESS,
+            )
+            refresh_view()
             await answer()
 
         while True:
