@@ -1,9 +1,12 @@
 """Telegram DM bridge — lets the operator ask the same Claude-backed
-fertilizer assistant the in-app chat panel provides, from Telegram.
+fertilizer assistant the in-app chat panel provides, from Telegram, and
+approve any proposed dosing/parameter/growth change with inline buttons
+without opening the app.
 
 v1 scope (see docs/superpowers/specs/2026-08-17-telegram-bridge-design.md):
-DM only, Q&A only. No remote approval of proposals, no proactive alerts,
-no persistence across restarts.
+DM only. Remote approval added 2026-08-18 — supersedes that spec's
+"approval stays in-app" decision. Still no proactive alerts, no
+persistence of chat history or pending proposals across restarts.
 """
 import asyncio
 import json
@@ -29,20 +32,6 @@ def is_allowed(sender_id: int, allowed: set[int]) -> bool:
     return sender_id in allowed
 
 
-_PROPOSAL_NOTE = "\n\n(Proposed change — open the app to review and approve.)"
-
-
-def format_reply(result: dict) -> str:
-    """Turn an llm_agent.chat() result into the text sent back over
-    Telegram. If Claude proposed a parameter or growth change, the
-    proposal itself is never applied here (v1 is Q&A-only) — just point
-    the operator back to the app to approve it."""
-    text = result["text"]
-    if result.get("param_proposal") or result.get("growth_proposal"):
-        text += _PROPOSAL_NOTE
-    return text
-
-
 class ChatHistory:
     """In-memory, per-chat message history. Resets on app restart — v1
     doesn't persist Telegram conversations (see design spec, Scope)."""
@@ -61,7 +50,87 @@ class ChatHistory:
         return list(self._by_chat.get(chat_id, []))
 
 
+class PendingProposals:
+    """In-memory store of dosing/parameter/growth proposals awaiting a
+    Telegram inline-button tap. Lost on app restart, same as ChatHistory —
+    a stale proposal from before a restart just gets "already handled"
+    instead of resurrecting and possibly applying against changed state."""
+
+    def __init__(self) -> None:
+        self._next_id = 1
+        self._by_id: dict[str, dict] = {}
+
+    def register(self, kind: str, data: dict, chat_id: int) -> str:
+        pid = format(self._next_id, "x")
+        self._next_id += 1
+        self._by_id[pid] = {"kind": kind, "data": data, "chat_id": chat_id}
+        return pid
+
+    def get(self, pid: str) -> dict | None:
+        return self._by_id.get(pid)
+
+    def pop(self, pid: str) -> dict | None:
+        """Removes the record — first tap wins. A second tap, or a tap
+        after a restart, finds nothing and the caller reports it as
+        already handled instead of applying it twice."""
+        return self._by_id.pop(pid, None)
+
+
+def approval_keyboard(pid: str) -> dict:
+    """Telegram inline keyboard for one pending proposal."""
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "✅ Approve", "callback_data": f"approve:{pid}"},
+                {"text": "❌ Reject", "callback_data": f"reject:{pid}"},
+            ]
+        ]
+    }
+
+
 _UNITS = {"EC": "mS/cm", "PH": "pH", "Temperature": "°C", "Humidity": "%"}
+
+
+def format_dose_proposal(action: dict) -> str:
+    """One dosing action, as shown before the operator taps Approve/Reject.
+    Mirrors chat_widget.py's action_card."""
+    pump = action.get("pump", "?")
+    amount = float(action.get("amount_ml", 0) or 0)
+    reason = action.get("reason", "")
+    lines = [f"💧 {pump}: {amount:.1f} ml"]
+    if reason:
+        lines.append(reason)
+    return "\n".join(lines)
+
+
+def format_param_proposal(proposal: dict) -> str:
+    """A crop parameter setup proposal, as shown before approval. Mirrors
+    chat_widget.py's param_card."""
+    crop = proposal.get("crop", "?")
+    targets_prop = proposal.get("targets", {})
+    lines = [f"⚙ Setup for: {crop}"]
+    for name in ("EC", "PH", "Temperature", "Humidity"):
+        rng = targets_prop.get(name)
+        if not rng:
+            continue
+        lines.append(f"{name}: {rng['min']} – {rng['max']} {_UNITS.get(name, '')}")
+    return "\n".join(lines)
+
+
+def format_growth_proposal(proposal: dict) -> str:
+    """A growth-stage plan proposal, as shown before approval. Mirrors
+    chat_widget.py's growth_card."""
+    crop = proposal.get("crop", "?")
+    stages_prop = proposal.get("stages", [])
+    lines = [f"🌱 Grow plan: {crop}"]
+    for s in stages_prop:
+        name = s.get("name", "?")
+        days = s.get("duration_days", "?")
+        tgt = s.get("targets", {})
+        ec = tgt.get("EC")
+        ec_str = f" · EC {ec['min']}–{ec['max']}" if ec else ""
+        lines.append(f"{name}: {days} days{ec_str}")
+    return "\n".join(lines)
 
 
 def status_summary(readings: dict, targets: dict, tank_liters: float) -> str:
@@ -146,17 +215,12 @@ def status_image(readings: dict, targets: dict) -> bytes:
 
 
 def format_recommendation(result: dict) -> str:
-    """Render an llm_agent.recommend() result as plain text. Telegram v1 has
-    no approve/reject UI (spec: approval stays in-app), so a proposed dose
-    is listed as text with a pointer back to the app — never applied here."""
+    """Render an llm_agent.recommend() result's summary line. Per-action
+    detail is sent as separate, individually-approvable messages
+    (format_dose_proposal) instead of an inert bullet list here."""
     lines = [result.get("summary", "")]
-    actions = result.get("actions", [])
-    if not actions:
+    if not result.get("actions"):
         lines.append("All values within target — no dosing needed")
-    else:
-        for a in actions:
-            lines.append(f"• {a['pump']}: {a['amount_ml']} ml — {a['reason']}")
-        lines.append(_PROPOSAL_NOTE.strip())
     return "\n".join(line for line in lines if line)
 
 
@@ -185,11 +249,24 @@ def _send_photo_url(token: str) -> str:
     return f"https://api.telegram.org/bot{token}/sendPhoto"
 
 
-async def poll_telegram(state) -> None:
+def _answer_callback_url(token: str) -> str:
+    return f"https://api.telegram.org/bot{token}/answerCallbackQuery"
+
+
+def _edit_message_url(token: str) -> str:
+    return f"https://api.telegram.org/bot{token}/editMessageText"
+
+
+async def poll_telegram(state, actuator_hub, db, page, refresh_view) -> None:
     """Background task: long-poll Telegram for DMs, answer them with the
-    same llm_agent.chat() the in-app chat panel uses. Mirrors the shape of
+    same llm_agent.chat() the in-app chat panel uses, and handle inline
+    Approve/Reject taps on proposed changes. Mirrors the shape of
     app.app.poll_sensors — runs forever, one bad iteration must not kill
     the task or the app around it.
+
+    actuator_hub/db are the same instances the in-app chat's action_card
+    uses to dose and log — a Telegram approval goes through the identical
+    Actuator.dose() cooldown/clamp, no separate safety net.
 
     No-ops (logs once, returns) if TELEGRAM_BOT_TOKEN isn't set, so dev
     machines without a bot configured are unaffected."""
@@ -203,9 +280,104 @@ async def poll_telegram(state) -> None:
 
     allowed = parse_allowed_ids(os.environ.get("TELEGRAM_ALLOWED_IDS"))
     history = ChatHistory()
+    pending = PendingProposals()
     offset: int | None = None
 
     async with httpx.AsyncClient(timeout=35) as client:
+
+        async def handle_callback(callback: dict) -> None:
+            """Approve/Reject button tap. Re-checks the allowlist on the
+            tapper's own id — never assumes the button is safe just
+            because it was shown in an allowed chat."""
+            sender_id = callback.get("from", {}).get("id")
+            cq_id = callback["id"]
+            message = callback.get("message") or {}
+            chat_id = message.get("chat", {}).get("id")
+            message_id = message.get("message_id")
+
+            async def answer(text: str = "") -> None:
+                # Required or the button spins forever on the operator's phone.
+                await client.post(
+                    _answer_callback_url(token),
+                    json={"callback_query_id": cq_id, "text": text},
+                )
+
+            if not is_allowed(sender_id, allowed):
+                logger.info(
+                    "Telegram callback from unallowed id=%s ignored.", sender_id
+                )
+                await answer("Not authorized")
+                return
+
+            try:
+                action, pid = callback.get("data", "").split(":", 1)
+            except ValueError:
+                await answer()
+                return
+
+            record = pending.pop(pid)
+            if record is None:
+                await answer("Already handled")
+                return
+
+            if action == "reject":
+                await client.post(
+                    _edit_message_url(token),
+                    json={"chat_id": chat_id, "message_id": message_id,
+                          "text": "❌ Rejected"},
+                )
+                await answer("Rejected")
+                return
+
+            kind, data = record["kind"], record["data"]
+            try:
+                if kind == "dose":
+                    pump = data.get("pump", "?")
+                    amount = float(data.get("amount_ml", 0) or 0)
+                    try:
+                        dispensed = actuator_hub.dose(pump, amount)
+                    except RuntimeError as exc:  # includes CooldownError
+                        result_text = f"⚠ {exc}"
+                    else:
+                        db.log_dose(pump, dispensed, source="llm")
+                        result_text = f"✅ Dispensed {dispensed:.1f} ml"
+                elif kind == "param":
+                    applied = []
+                    for name, rng in data.get("targets", {}).items():
+                        try:
+                            lo, hi = float(rng["min"]), float(rng["max"])
+                        except (KeyError, TypeError, ValueError):
+                            continue
+                        if lo >= hi:  # reject nonsense ranges
+                            continue
+                        state.targets[name] = {"min": lo, "max": hi}
+                        applied.append(name)
+                    if applied:
+                        state.save()
+                        result_text = f"✅ Saved ({', '.join(applied)})"
+                    else:
+                        result_text = "⚠ No valid ranges to apply"
+                elif kind == "growth":
+                    count = state.set_stages(data.get("stages", []))
+                    if count == 0:
+                        result_text = "⚠ No usable stages"
+                    else:
+                        state.start_planting()
+                        state.save()
+                        result_text = f"✅ Set {count} stages — planting starts today"
+                else:
+                    result_text = "⚠ Unknown proposal type"
+            except Exception:
+                logger.exception("Telegram callback approval failed")
+                result_text = "⚠ Unexpected error applying change."
+
+            await client.post(
+                _edit_message_url(token),
+                json={"chat_id": chat_id, "message_id": message_id,
+                      "text": result_text},
+            )
+            await answer()
+
         while True:
             try:
                 resp = await client.get(_get_updates_url(token, offset))
@@ -217,6 +389,12 @@ async def poll_telegram(state) -> None:
 
                 for update in data["result"]:
                     offset = update["update_id"] + 1
+
+                    callback = update.get("callback_query")
+                    if callback:
+                        await handle_callback(callback)
+                        continue
+
                     message = update.get("message")
                     if not message or "text" not in message:
                         continue
@@ -258,12 +436,27 @@ async def poll_telegram(state) -> None:
                                 state.active_profile, state.tank_capacity_liters(),
                                 state.language, state.llm_model,
                             )
-                            reply_text = format_recommendation(result)
                         except llm_agent.LLMError as exc:
                             reply_text = f"⚠ {exc}"
                         except Exception:
                             logger.exception("Telegram recommend() call failed")
                             reply_text = "⚠ Unexpected error handling your message."
+                        else:
+                            await client.post(
+                                _send_message_url(token),
+                                json={"chat_id": chat_id,
+                                      "text": format_recommendation(result),
+                                      "reply_markup": reply_keyboard()},
+                            )
+                            for action in result.get("actions", []):
+                                pid = pending.register("dose", action, chat_id)
+                                await client.post(
+                                    _send_message_url(token),
+                                    json={"chat_id": chat_id,
+                                          "text": format_dose_proposal(action),
+                                          "reply_markup": approval_keyboard(pid)},
+                                )
+                            continue
                     else:
                         history.append(chat_id, "user", text)
                         try:
@@ -274,7 +467,6 @@ async def poll_telegram(state) -> None:
                                 state.language, state.llm_model,
                                 list(state.growth_config()["stages"]),
                             )
-                            reply_text = format_reply(result)
                         except llm_agent.LLMError as exc:
                             reply_text = f"⚠ {exc}"
                         except Exception:
@@ -282,6 +474,25 @@ async def poll_telegram(state) -> None:
                             reply_text = "⚠ Unexpected error handling your message."
                         else:
                             history.append(chat_id, "assistant", result["text"])
+                            await client.post(
+                                _send_message_url(token),
+                                json={"chat_id": chat_id, "text": result["text"],
+                                      "reply_markup": reply_keyboard()},
+                            )
+                            for kind, key, fmt in (
+                                ("param", "param_proposal", format_param_proposal),
+                                ("growth", "growth_proposal", format_growth_proposal),
+                            ):
+                                proposal = result.get(key)
+                                if not proposal:
+                                    continue
+                                pid = pending.register(kind, proposal, chat_id)
+                                await client.post(
+                                    _send_message_url(token),
+                                    json={"chat_id": chat_id, "text": fmt(proposal),
+                                          "reply_markup": approval_keyboard(pid)},
+                                )
+                            continue
 
                     await client.post(
                         _send_message_url(token),

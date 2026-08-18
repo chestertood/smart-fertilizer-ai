@@ -131,6 +131,14 @@ def main(page: ft.Page) -> None:
         body.controls = [views[name]()]
         page.update()
 
+    def refresh_current_view() -> None:
+        """Rebuild whichever view is currently on screen from live state —
+        used after a language switch and after a Telegram approval applies
+        a change, so the operator never has to navigate away and back to
+        see it."""
+        body.controls = [views[current_view_name[0]]()]
+        page.update()
+
     def refresh_language() -> None:
         """Re-render the nav rail labels, the app-bar flag, and the currently
         visible view after a language switch (from the flag shortcut or the
@@ -142,8 +150,7 @@ def main(page: ft.Page) -> None:
             exit_button.update()
         if flag_setter[0] is not None:
             flag_setter[0](state.language)
-        body.controls = [views[current_view_name[0]]()]
-        page.update()
+        refresh_current_view()
 
     rail = build_nav_rail(navigate, selected_index=0, lang=state.language)
 
@@ -307,5 +314,8 @@ def main(page: ft.Page) -> None:
     page.run_task(poll_sensors)
     page.run_task(poll_connectivity)
     page.run_task(poll_clock)
-    page.run_task(telegram_bridge.poll_telegram, state)
+    page.run_task(
+        telegram_bridge.poll_telegram, state, actuator_hub, db,
+        page, refresh_current_view,
+    )
     
