@@ -9,7 +9,7 @@ import os
 import sys
 import sqlite3
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,13 @@ else:
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         "data",
     )
+
+
+# Readings land every ~30s forever, so the table is the one thing that can
+# fill a Pi's SD card. Rows older than this are dropped once, at startup.
+# Env override; 0 keeps everything (the table is future ML training data, so
+# a grower who wants the full record can opt out).
+RETENTION_DAYS = int(os.environ.get("READINGS_RETENTION_DAYS", "180"))
 
 
 def _now() -> str:
@@ -41,6 +48,7 @@ class Database:
         self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_schema()
+        self._prune_readings()
         logger.info("Database ready at %s", path)
 
     def _init_schema(self) -> None:
@@ -69,6 +77,11 @@ class Database:
                 input_tokens   INTEGER NOT NULL,
                 output_tokens  INTEGER NOT NULL
             );
+            -- History queries are all "rows since <timestamp>", and the
+            -- readings table reaches millions of rows on a Pi left running.
+            -- Without these every chart redraw is a full table scan.
+            CREATE INDEX IF NOT EXISTS idx_readings_ts ON readings(ts);
+            CREATE INDEX IF NOT EXISTS idx_dosing_ts ON dosing_events(ts);
             """
         )
         # Migration for DBs created before the stage column existed —
@@ -77,6 +90,19 @@ class Database:
         if "stage" not in cols:
             self._conn.execute("ALTER TABLE readings ADD COLUMN stage TEXT")
         self._conn.commit()
+
+    def _prune_readings(self) -> None:
+        """Drop readings older than RETENTION_DAYS. Startup only — one delete
+        per run is enough for a table that grows two rows a minute."""
+        if RETENTION_DAYS <= 0:
+            return
+        cutoff = (datetime.now(timezone.utc)
+                  - timedelta(days=RETENTION_DAYS)).isoformat(timespec="seconds")
+        cur = self._conn.execute("DELETE FROM readings WHERE ts < ?", (cutoff,))
+        self._conn.commit()
+        if cur.rowcount > 0:
+            logger.info("Pruned %d readings older than %d days",
+                        cur.rowcount, RETENTION_DAYS)
 
     # -- readings -----------------------------------------------------------
 

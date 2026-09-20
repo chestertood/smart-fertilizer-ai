@@ -49,7 +49,8 @@ def check_internet() -> bool:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "Smart Fertilizer"
+    page.title = "Smart Fertilizer Dosing"
+    page.update()
     page.bgcolor = theme.BG
     page.padding = 0
     page.spacing = 0
@@ -57,6 +58,9 @@ def main(page: ft.Page) -> None:
     # Seed Material widgets (buttons, text fields, switches, dialogs) from the
     # brand green so built-in controls match the hand-styled cards.
     page.theme = ft.Theme(color_scheme_seed=theme.PRIMARY)
+    # Pixel font for the app-bar title, matching the pixel-art logo. Bundled
+    # locally (OFL) so it still works offline on the Pi.
+    page.fonts = {"PixelFont": "fonts/PressStart2P-Regular.ttf"}
 
     if os.environ.get("FLET_VIEW") != "web":
         page.window.width = 1280
@@ -70,6 +74,37 @@ def main(page: ft.Page) -> None:
             page.window.full_screen = True
             page.window.frameless = True
 
+    state = AppState()
+
+    # Palette first: Flet controls copy their colors at construction time, so
+    # the saved light/dark choice has to be applied before the splash, let
+    # alone the views.
+    theme.apply(state.theme_mode)
+    page.bgcolor = theme.BG
+    page.theme_mode = theme.flet_theme_mode()
+
+    # connect_all() on the sensor/actuator hubs is a blocking Modbus round
+    # trip per device (with retries/timeouts on anything unplugged or slow
+    # to wake) — on a kiosk with no title bar that showed as a blank white
+    # screen, indistinguishable from a hang. A splash makes the wait legible.
+    splash = ft.Column(
+        expand=True,
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        controls=[
+            ft.Image(src="logo.png", width=96, height=96, fit=ft.BoxFit.CONTAIN),
+            ft.Container(height=24),
+            ft.ProgressRing(width=28, height=28, stroke_width=3, color=theme.PRIMARY),
+            ft.Container(height=12),
+            ft.Text(
+                t("startup.connecting", state.language),
+                size=theme.FONT_SM, color=theme.TEXT_SECONDARY,
+            ),
+        ],
+    )
+    page.add(ft.Container(expand=True, bgcolor=theme.BG, content=splash))
+    page.update()
+
     hub = SensorHub()
     hub.connect_all()
 
@@ -77,30 +112,33 @@ def main(page: ft.Page) -> None:
     actuator_hub.connect_all()
 
     db = Database()
-    state = AppState()
+
+    page.controls.clear()
 
     # Maps sensor name -> updater fn for the cards currently on screen.
     # Cleared and repopulated whenever the Dashboard view is (re)built.
     updaters: dict = {}
     # Holds the connection status updater for the currently visible dashboard.
-    connection_updater: list = [None]
+    connection_updater = None
     # Holds the clock-text updater for the currently visible dashboard.
-    clock_updater: list = [None]
+    clock_updater = None
     # Tracks which view is currently showing, so a language switch can
     # re-render it in place (see refresh_language below).
-    current_view_name: list = ["Dashboard"]
+    current_view_name = "Dashboard"
 
     def build_dash():
+        nonlocal connection_updater, clock_updater
         dashboard, update_conn, update_clock = build_dashboard(state, updaters)
-        connection_updater[0] = update_conn
-        clock_updater[0] = update_clock
+        connection_updater = update_conn
+        clock_updater = update_clock
         return dashboard
 
-    # Chat assistant overlay + its toggle; the toggle is wired to a button in
-    # the top app bar. Built before the app bar so the callback exists.
-    chat_overlay, chat_toggle = build_chat_widget(page, state, actuator_hub, db)
-
-    flag_setter: list = [None]
+    # Every control below carries palette colors baked in at construction
+    # time, so a theme switch rebuilds them as a group — see build_shell().
+    # They're declared here because the handlers defined next close over them.
+    chat_overlay = chat_toggle = None
+    app_bar = flag_setter = mode_setter = None
+    rail = exit_button = None
 
     def on_flag(e=None) -> None:
         # Flag shortcut in the app bar toggles between the two languages;
@@ -109,34 +147,87 @@ def main(page: ft.Page) -> None:
         state.save()
         refresh_language()
 
-    app_bar, set_flag = build_app_bar(state, on_chat=chat_toggle, on_flag=on_flag)
-    flag_setter[0] = set_flag
+    # Mode badge in the app bar toggles llm_mode. Turning Auto-dose ON gets
+    # a confirm dialog first — it's the direction that can fire a pump with
+    # nobody watching; turning it back OFF (the safe direction) doesn't.
+    def _apply_mode_change() -> None:
+        state.toggle_llm_mode()
+        state.save()
+        # Not just the app-bar badge: rebuild whatever view is on screen too
+        # (e.g. Settings' own mode switch) — otherwise toggling from the app
+        # bar while Settings is open leaves its switch showing the old mode
+        # until the operator navigates away and back.
+        refresh_current_view()
+
+    def on_mode(e=None) -> None:
+        if state.llm_mode != "approval":
+            _apply_mode_change()
+            return
+
+        # Built fresh on open so it speaks the currently selected language.
+        lang = state.language
+
+        def close(_=None) -> None:
+            dlg.open = False
+            page.update()
+
+        def confirm(_=None) -> None:
+            close()
+            _apply_mode_change()
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(t("mode.enable_title", lang)),
+            content=ft.Text(t("mode.enable_body", lang)),
+            actions=[
+                ft.TextButton(t("common.cancel", lang), on_click=close),
+                ft.FilledButton(
+                    t("mode.enable_confirm", lang), on_click=confirm,
+                    style=ft.ButtonStyle(bgcolor="#F57F17", color="#FFFFFF"),
+                ),
+            ],
+        )
+        page.show_dialog(dlg)
+
+    def sync_mode_badge() -> None:
+        # Settings toggles state.llm_mode itself (own confirm dialog, same
+        # as the app bar's) — this just re-paints the badge to match after
+        # the fact, so the two views of one switch don't go stale.
+        mode_setter(state.llm_mode)
 
     views = {
         "Dashboard": build_dash,
         "Parameters": lambda: build_parameters(page, actuator_hub, db, state),
         "History": lambda: build_history(db, state),
-        "Settings": lambda: build_settings(page, state, db, on_language_changed=refresh_language),
+        "Settings": lambda: build_settings(
+            page, state, db, on_language_changed=refresh_language,
+            on_mode_changed=sync_mode_badge,
+            on_theme_changed=lambda m: set_theme_mode(m),
+        ),
     }
 
+    # Filled by build_shell(); the nav swaps its single child on navigate().
     body = ft.Column(expand=True, spacing=0)
-    body.controls = [build_dash()]
 
     def navigate(index: int) -> None:
+        nonlocal connection_updater, clock_updater, current_view_name
         updaters.clear()
-        connection_updater[0] = None
-        clock_updater[0] = None
-        name = NAV_NAMES[index]
-        current_view_name[0] = name
-        body.controls = [views[name]()]
+        connection_updater = None
+        clock_updater = None
+        current_view_name = NAV_NAMES[index]
+        body.controls = [views[current_view_name]()]
         page.update()
 
     def refresh_current_view() -> None:
         """Rebuild whichever view is currently on screen from live state —
         used after a language switch and after a Telegram approval applies
         a change, so the operator never has to navigate away and back to
-        see it."""
-        body.controls = [views[current_view_name[0]]()]
+        see it. Also re-syncs the app bar's mode icon: it's outside `body`
+        so rebuilding the view alone wouldn't catch a mode flip made from
+        Telegram (the "Mode: …" button toggles state.llm_mode directly,
+        with no other way back into this process to repaint the badge)."""
+        body.controls = [views[current_view_name]()]
+        mode_setter(state.llm_mode)
         page.update()
 
     def refresh_language() -> None:
@@ -148,11 +239,8 @@ def main(page: ft.Page) -> None:
         exit_button.tooltip = t("nav.exit", state.language)
         if KIOSK:
             exit_button.update()
-        if flag_setter[0] is not None:
-            flag_setter[0](state.language)
+        flag_setter(state.language)
         refresh_current_view()
-
-    rail = build_nav_rail(navigate, selected_index=0, lang=state.language)
 
     def open_exit_dialog(e=None) -> None:
         # Built fresh on each open so it picks up the current language, and
@@ -172,7 +260,7 @@ def main(page: ft.Page) -> None:
         dlg = ft.AlertDialog(
             modal=True,
             title=ft.Text(t("exit.title", lang)),
-            content=ft.Text(t("exit.body", lang), size=12),
+            content=ft.Text(t("exit.body", lang), size=theme.FONT_SM),
             actions=[
                 ft.TextButton(t("exit.cancel", lang), on_click=close),
                 ft.FilledButton(
@@ -184,40 +272,77 @@ def main(page: ft.Page) -> None:
         )
         page.show_dialog(dlg)
 
-    # Kiosk has no title bar, so the app carries its own Exit button, pinned
-    # below the rail at the bottom-left. Windowed builds keep their native
-    # close button and don't need it.
-    exit_button = ft.IconButton(
-        icon=ft.Icons.POWER_SETTINGS_NEW,
-        icon_color=theme.DANGER,
-        tooltip=t("nav.exit", state.language),
-        on_click=open_exit_dialog,
-        style=ft.ButtonStyle(side=ft.BorderSide(0, "transparent")),
-    )
-    if KIOSK:
-        rail.expand = True
-        rail_width = 96  # matches NavigationRail's rendered width in ALL-label mode
-        nav_side: ft.Control = ft.Column(
-            width=rail_width,
-            spacing=0,
-            controls=[
-                rail,
-                ft.Container(
-                    width=rail_width,
-                    bgcolor=theme.NAV_BG,
-                    padding=ft.Padding(left=0, right=0, top=4, bottom=15),
-                    content=ft.Row(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        controls=[exit_button],
-                    ),
-                ),
-            ],
-        )
-    else:
-        nav_side = rail
+    def build_shell() -> ft.Control:
+        """Build every palette-carrying control and return the window's root.
 
-    page.add(
-        ft.Column(
+        Called once at startup and again on a theme switch: Flet controls
+        copy their colors when they're constructed, so repainting the app
+        means rebuilding it rather than poking at the existing tree.
+        """
+        nonlocal chat_overlay, chat_toggle, app_bar, flag_setter, mode_setter
+        nonlocal rail, exit_button
+
+        # Chat assistant overlay + its toggle; the toggle is wired to a
+        # button in the top app bar, so it's built before the app bar.
+        # ponytail: a rebuild drops the current chat transcript (it lives in
+        # the widget's own closure). Fine for a theme switch; if the
+        # transcript has to survive, move it onto AppState.
+        chat_overlay, chat_toggle = build_chat_widget(page, state, actuator_hub, db)
+
+        app_bar, flag_setter, mode_setter = build_app_bar(
+            state, on_chat=chat_toggle, on_flag=on_flag, on_mode=on_mode,
+        )
+
+        rail = build_nav_rail(
+            navigate,
+            selected_index=NAV_NAMES.index(current_view_name),
+            lang=state.language,
+        )
+
+        # Kiosk has no title bar, so the app carries its own Exit button,
+        # pinned below the rail at the bottom-left. Windowed builds keep
+        # their native close button and don't need it.
+        exit_button = ft.IconButton(
+            icon=ft.Icons.POWER_SETTINGS_NEW,
+            icon_color=theme.DANGER,
+            tooltip=t("nav.exit", state.language),
+            on_click=open_exit_dialog,
+            style=ft.ButtonStyle(side=ft.BorderSide(0, "transparent")),
+        )
+        # 10px gap between the app bar and the rail's own top padding —
+        # NavigationRail has no padding of its own, so a Container wraps it.
+        rail_top_pad = ft.Container(
+            expand=True,
+            bgcolor=theme.NAV_BG,
+            padding=ft.Padding(left=0, right=0, top=12, bottom=0),
+            content=rail,
+        )
+        if KIOSK:
+            rail.expand = True
+            rail_width = 96  # NavigationRail's rendered width in ALL-label mode
+            nav_side: ft.Control = ft.Column(
+                width=rail_width,
+                spacing=0,
+                controls=[
+                    rail_top_pad,
+                    ft.Container(
+                        width=rail_width,
+                        bgcolor=theme.NAV_BG,
+                        padding=ft.Padding(left=0, right=0, top=4, bottom=15),
+                        content=ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            controls=[exit_button],
+                        ),
+                    ),
+                ],
+            )
+        else:
+            nav_side = rail_top_pad
+
+        # The visible view is rebuilt too, so it picks up the new palette.
+        body.controls = [views[current_view_name]()]
+
+        return ft.Column(
             expand=True,
             spacing=0,
             controls=[
@@ -234,11 +359,29 @@ def main(page: ft.Page) -> None:
                 ),
             ],
         )
-    )
 
-    # Chat panel overlay (opened from the app-bar button, top-right).
-    page.overlay.append(chat_overlay)
-    page.update()
+    def mount() -> None:
+        """Put a freshly built shell on the page, replacing what's there."""
+        page.controls.clear()
+        page.overlay.clear()
+        page.add(build_shell())
+        # Chat panel overlay (opened from the app-bar button, top-right).
+        page.overlay.append(chat_overlay)
+        page.update()
+
+    def set_theme_mode(new_mode: str) -> None:
+        """Switch palette and repaint the whole window (Settings calls this).
+        Persisted, so the kiosk comes back up in the mode it was left in."""
+        if new_mode == state.theme_mode:
+            return
+        state.theme_mode = new_mode
+        state.save()
+        theme.apply(new_mode)
+        page.bgcolor = theme.BG
+        page.theme_mode = theme.flet_theme_mode()
+        mount()
+
+    mount()
 
     async def poll_sensors() -> None:
         poll_count = 0
@@ -260,7 +403,11 @@ def main(page: ft.Page) -> None:
                 state.last_readings = readings
                 for name, value in readings.items():
                     update = updaters.get(name)
-                    if update and value == value:  # skip NaN
+                    if update:
+                        # NaN is passed through, not skipped: the card needs
+                        # to know a read failed so it can grey out and show
+                        # "No signal" instead of holding a stale number that
+                        # still looks live.
                         update(value)
                 poll_count += 1
                 if poll_count % LOG_EVERY_N_POLLS == 0:
@@ -285,9 +432,8 @@ def main(page: ft.Page) -> None:
                 consecutive_failures = 0
             else:
                 consecutive_failures += 1
-            fn = connection_updater[0]
-            if fn is not None:
-                fn(is_online or consecutive_failures < 2)
+            if connection_updater is not None:
+                connection_updater(is_online or consecutive_failures < 2)
                 page.update()
             await asyncio.sleep(CONNECTIVITY_INTERVAL_S)
 
@@ -295,9 +441,8 @@ def main(page: ft.Page) -> None:
         last_date = datetime.date.today()
         while True:
             try:
-                fn = clock_updater[0]
-                if fn is not None:
-                    fn()
+                if clock_updater is not None:
+                    clock_updater()
                     page.update()
                 # Growth-stage progress is computed at view build time, so a
                 # kiosk left running overnight would show yesterday's stage
@@ -305,7 +450,7 @@ def main(page: ft.Page) -> None:
                 today = datetime.date.today()
                 if today != last_date:
                     last_date = today
-                    body.controls = [views[current_view_name[0]]()]
+                    body.controls = [views[current_view_name]()]
                     page.update()
             except Exception:
                 logger.exception("poll_clock iteration failed")

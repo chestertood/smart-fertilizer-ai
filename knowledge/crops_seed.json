@@ -2,50 +2,3967 @@
   {
     "crop": "Lettuce",
     "stages": [
-      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 0.8, "max": 1.2}, "PH": {"min": 5.5, "max": 6.0}, "Temperature": {"min": 18, "max": 22}, "Humidity": {"min": 60, "max": 70}}},
-      {"name": "Growing", "duration_days": 21, "targets": {"EC": {"min": 1.2, "max": 1.8}, "PH": {"min": 5.5, "max": 6.2}, "Temperature": {"min": 18, "max": 24}, "Humidity": {"min": 55, "max": 70}}}
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 22
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.2
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
     ],
     "notes": "Cool-season leafy green. Keep EC low; high EC causes tip burn. pH 5.5-6.2."
   },
   {
     "crop": "Kale",
     "stages": [
-      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 16, "max": 22}, "Humidity": {"min": 55, "max": 70}}},
-      {"name": "Growing", "duration_days": 28, "targets": {"EC": {"min": 1.4, "max": 2.0}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 16, "max": 24}, "Humidity": {"min": 50, "max": 65}}}
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 22
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 65
+          }
+        }
+      }
     ],
     "notes": "Hardy brassica. Tolerates higher EC than lettuce. Thai: คะน้า."
   },
   {
     "crop": "Pak Choi",
     "stages": [
-      {"name": "Seedling", "duration_days": 10, "targets": {"EC": {"min": 0.8, "max": 1.2}, "PH": {"min": 6.0, "max": 6.5}, "Temperature": {"min": 18, "max": 22}, "Humidity": {"min": 60, "max": 70}}},
-      {"name": "Growing", "duration_days": 21, "targets": {"EC": {"min": 1.5, "max": 2.0}, "PH": {"min": 6.0, "max": 7.0}, "Temperature": {"min": 18, "max": 24}, "Humidity": {"min": 55, "max": 70}}}
+      {
+        "name": "Seedling",
+        "duration_days": 10,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 22
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
     ],
     "notes": "Fast brassica. Thai: ผักกวางตุ้ง/กวางตุ้ง."
   },
   {
     "crop": "Morning Glory",
     "stages": [
-      {"name": "Seedling", "duration_days": 7, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 22, "max": 28}, "Humidity": {"min": 60, "max": 75}}},
-      {"name": "Growing", "duration_days": 14, "targets": {"EC": {"min": 1.4, "max": 2.2}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 24, "max": 30}, "Humidity": {"min": 60, "max": 75}}}
+      {
+        "name": "Seedling",
+        "duration_days": 7,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 24,
+            "max": 30
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
     ],
     "notes": "Warm-season, very fast. Thai: ผักบุ้ง (water spinach)."
   },
   {
     "crop": "Tomato",
     "stages": [
-      {"name": "Seedling", "duration_days": 21, "targets": {"EC": {"min": 1.2, "max": 1.8}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 25}, "Humidity": {"min": 60, "max": 70}}},
-      {"name": "Vegetative", "duration_days": 30, "targets": {"EC": {"min": 2.0, "max": 3.0}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 26}, "Humidity": {"min": 55, "max": 70}}},
-      {"name": "Fruiting", "duration_days": 60, "targets": {"EC": {"min": 2.5, "max": 3.5}, "PH": {"min": 5.8, "max": 6.3}, "Temperature": {"min": 20, "max": 26}, "Humidity": {"min": 50, "max": 65}}}
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 3.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 26
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 60,
+        "targets": {
+          "EC": {
+            "min": 2.5,
+            "max": 3.5
+          },
+          "PH": {
+            "min": 5.8,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 26
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 65
+          }
+        }
+      }
     ],
     "notes": "Fruiting crop needs high EC. Raise EC through fruiting for flavour."
   },
   {
     "crop": "Basil",
     "stages": [
-      {"name": "Seedling", "duration_days": 14, "targets": {"EC": {"min": 1.0, "max": 1.4}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 25}, "Humidity": {"min": 55, "max": 70}}},
-      {"name": "Growing", "duration_days": 28, "targets": {"EC": {"min": 1.4, "max": 2.2}, "PH": {"min": 5.5, "max": 6.5}, "Temperature": {"min": 20, "max": 28}, "Humidity": {"min": 50, "max": 65}}}
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 65
+          }
+        }
+      }
     ],
     "notes": "Warm-season herb. Thai: โหระพา/กะเพรา family."
+  },
+  {
+    "crop": "Artichoke",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.4,
+            "max": 0.6
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 0.8
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Asparagus",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.84,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Bean (Common)",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 4.0
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Broad Bean",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Broccoli",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.68,
+            "max": 2.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.8,
+            "max": 3.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Brussels Sprout",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.5,
+            "max": 3.0
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Cabbage",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.5,
+            "max": 3.0
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Capsicum",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Cauliflower",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.3,
+            "max": 0.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 0.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Celery",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.08,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: vegetable. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Cucumber",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.85,
+            "max": 1.27
+          },
+          "PH": {
+            "min": 5.8,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.27,
+            "max": 1.7
+          },
+          "PH": {
+            "min": 5.8,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.7,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.8,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Eggplant",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.25,
+            "max": 1.88
+          },
+          "PH": {
+            "min": 5.2,
+            "max": 5.8
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.88,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.2,
+            "max": 5.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.5,
+            "max": 3.5
+          },
+          "PH": {
+            "min": 5.2,
+            "max": 5.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Endive",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 12,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: leafy. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Marrow",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Okra",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Pea",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.4,
+            "max": 0.6
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 0.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Pepino",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 5.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Bell Pepper",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Hot Pepper",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.25
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 2.25,
+            "max": 3.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 3.0,
+            "max": 3.5
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Pumpkin",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 7.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Spinach",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 12,
+        "targets": {
+          "EC": {
+            "min": 1.08,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.6
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.3
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.6
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: leafy. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Sweet Corn",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Swiss Chard",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 12,
+        "targets": {
+          "EC": {
+            "min": 0.96,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.3
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: leafy. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Squash (Summer)",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Taro",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 5.5
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.5,
+            "max": 3.0
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 5.5
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Zucchini",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 22,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 85
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruiting. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Beetroot",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.48,
+            "max": 0.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 5.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Carrot",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.96,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.6
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.6
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Garlic",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.84,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Leek",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.84,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Onion",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.84,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.7
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.7
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Parsnip",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.84,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Potato",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Radish",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.96,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Silverbeet",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 12,
+        "targets": {
+          "EC": {
+            "min": 1.08,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.3
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: leafy. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Sweet Potato",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Turnip",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.08,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 17,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 65,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 35,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 15,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 75
+          }
+        }
+      }
+    ],
+    "notes": "Category: root. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Chicory",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Chives",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.08,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Fennel",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 1.0
+          },
+          "PH": {
+            "min": 6.4,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 6.4,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Lavender",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 1.0
+          },
+          "PH": {
+            "min": 6.4,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 6.4,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Lemon Balm",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 1.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Marjoram",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.96,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Mint",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Mustard Cress",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.72,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.0,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Parsley",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.48,
+            "max": 0.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Rosemary",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 1.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Sage",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.6,
+            "max": 1.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Thyme",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 14,
+        "targets": {
+          "EC": {
+            "min": 0.48,
+            "max": 0.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 45,
+            "max": 65
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 28,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 7.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 25
+          },
+          "Humidity": {
+            "min": 40,
+            "max": 60
+          }
+        }
+      }
+    ],
+    "notes": "Category: herb. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Watercress",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 12,
+        "targets": {
+          "EC": {
+            "min": 0.24,
+            "max": 0.4
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Growing",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 6.5,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 16,
+            "max": 24
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: leafy. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Banana",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Black Currant",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.7,
+            "max": 1.05
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.05,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Blueberry",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 4.0,
+            "max": 5.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 4.0,
+            "max": 5.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 4.0,
+            "max": 5.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Melon",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.5
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Passionfruit",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Paw-Paw",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 6.2,
+            "max": 6.8
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Pineapple",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 1.0,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 2.0,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Red Currant",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.7,
+            "max": 1.05
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.05,
+            "max": 1.4
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.4,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.7,
+            "max": 6.3
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Rhubarb",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.8,
+            "max": 1.2
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.2,
+            "max": 1.6
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.6,
+            "max": 2.0
+          },
+          "PH": {
+            "min": 5.0,
+            "max": 6.0
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Strawberry",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.9,
+            "max": 1.35
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.35,
+            "max": 1.8
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.8,
+            "max": 2.2
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.5
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
+  },
+  {
+    "crop": "Watermelon",
+    "stages": [
+      {
+        "name": "Seedling",
+        "duration_days": 21,
+        "targets": {
+          "EC": {
+            "min": 0.75,
+            "max": 1.12
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.1
+          },
+          "Temperature": {
+            "min": 20,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 60,
+            "max": 80
+          }
+        }
+      },
+      {
+        "name": "Vegetative",
+        "duration_days": 30,
+        "targets": {
+          "EC": {
+            "min": 1.12,
+            "max": 1.5
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.1
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 55,
+            "max": 75
+          }
+        }
+      },
+      {
+        "name": "Fruiting",
+        "duration_days": 45,
+        "targets": {
+          "EC": {
+            "min": 1.5,
+            "max": 2.4
+          },
+          "PH": {
+            "min": 5.5,
+            "max": 6.1
+          },
+          "Temperature": {
+            "min": 18,
+            "max": 28
+          },
+          "Humidity": {
+            "min": 50,
+            "max": 70
+          }
+        }
+      }
+    ],
+    "notes": "Category: fruit. EC/pH from hydroponic grower charts; temperature/humidity are category defaults (not crop-specific), verify before automated dosing."
   }
 ]

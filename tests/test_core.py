@@ -11,6 +11,8 @@ import tempfile
 import unittest
 from unittest import mock
 
+import flet as ft
+
 # Point the config store at a temp dir before anything imports it, so tests
 # never touch the real data/app_config.json.
 import config.store as store
@@ -19,9 +21,9 @@ _TMP = tempfile.mkdtemp()
 store._DATA_DIR = _TMP
 store._CONFIG_PATH = os.path.join(_TMP, "app_config.json")
 
-from config.sensors import get_status  # noqa: E402
+from config.sensors import get_status, SENSORS  # noqa: E402
 from config.profiles import AppState, DEFAULT_PROFILE  # noqa: E402
-from app.components.sensor_card import _bar_fraction  # noqa: E402
+from app.components.sensor_card import _bar_fraction, sensor_card  # noqa: E402
 from app.views.parameters import (  # noqa: E402
     invalid_target_sensors, is_number, num_field,
 )
@@ -29,6 +31,7 @@ from app.services.actuators import (  # noqa: E402
     ActuatorHub, CooldownError, DOSE_COOLDOWN_S,
 )
 from app.services.database import Database  # noqa: E402
+import app.services.database as database  # noqa: E402
 
 
 class TestGetStatus(unittest.TestCase):
@@ -252,6 +255,81 @@ class TestDatabase(unittest.TestCase):
         row = self.db.recent_doses(1)[0]
         self.assertEqual(row["pump"], "Nutrient A")
         self.assertEqual(row["source"], "manual")
+
+
+class TestSensorCardStale(unittest.TestCase):
+    """A failed read (NaN) must stop the card looking live — but a single
+    dropped Modbus frame must not flash "No signal"."""
+
+    def _card(self):
+        card, update = sensor_card(SENSORS[0], {"min": 1.0, "max": 2.0}, "en")
+        # The card isn't attached to a page in tests; Control.update() would
+        # raise. Everything else about the update path stays real.
+        card.update = lambda: None
+        return card, update
+
+    def _texts(self, control, out=None):
+        out = [] if out is None else out
+        if isinstance(control, ft.Text):
+            out.append(control.value)
+        for attr in ("content", "controls"):
+            value = getattr(control, attr, None)
+            if value is None:
+                continue
+            for child in (value if isinstance(value, list) else [value]):
+                self._texts(child, out)
+        return out
+
+    def test_one_failed_read_does_not_mark_stale(self):
+        card, update = self._card()
+        update(1.5)
+        update(float("nan"))
+        self.assertNotIn("No signal", self._texts(card))
+
+    def test_two_failed_reads_mark_stale_keeping_last_value(self):
+        card, update = self._card()
+        update(1.5)
+        update(float("nan"))
+        update(float("nan"))
+        texts = self._texts(card)
+        self.assertIn("No signal", texts)
+        self.assertIn("1.5", texts)  # last known value stays on screen
+
+    def test_good_read_clears_stale_immediately(self):
+        card, update = self._card()
+        update(float("nan"))
+        update(float("nan"))
+        update(1.7)
+        texts = self._texts(card)
+        self.assertNotIn("No signal", texts)
+        self.assertIn("1.7", texts)
+
+
+class TestReadingsRetention(unittest.TestCase):
+    def setUp(self):
+        self.path = os.path.join(tempfile.mkdtemp(), "t.db")
+
+    def _insert_old(self, db, days):
+        ts = (datetime.datetime.now(datetime.timezone.utc)
+              - datetime.timedelta(days=days)).isoformat(timespec="seconds")
+        db._conn.execute("INSERT INTO readings (ts, ec) VALUES (?, ?)", (ts, 1.0))
+        db._conn.commit()
+
+    def test_old_readings_pruned_on_open(self):
+        db = Database(self.path)
+        self._insert_old(db, database.RETENTION_DAYS + 1)
+        self._insert_old(db, 1)
+        db.close()
+        db = Database(self.path)  # prune runs at startup
+        self.assertEqual(len(db.recent_readings(10)), 1)
+
+    def test_retention_zero_keeps_everything(self):
+        db = Database(self.path)
+        self._insert_old(db, 10_000)
+        db.close()
+        with mock.patch.object(database, "RETENTION_DAYS", 0):
+            db = Database(self.path)
+            self.assertEqual(len(db.recent_readings(10)), 1)
 
 
 class TestNumericInputFilter(unittest.TestCase):

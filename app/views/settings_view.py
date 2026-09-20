@@ -2,7 +2,6 @@ import os
 import flet as ft
 
 from app import theme
-from app.services import llm_agent
 from app.services.database import Database
 from config.profiles import AppState, DEFAULT_PROFILE
 from config.i18n import t, LANGUAGES
@@ -10,30 +9,26 @@ from config.i18n import t, LANGUAGES
 _NEW_PROFILE_KEY = "__new__"
 _LANG_LABELS = {"en": "English", "th": "ไทย (Thai)"}
 
-_MODEL_LABELS = {mid: label for mid, label, _ in llm_agent.AVAILABLE_MODELS}
-
-
-def _fmt_tokens(n: int) -> str:
-    if n >= 1_000_000:
-        return f"{n / 1_000_000:.2f}M"
-    if n >= 1_000:
-        return f"{n / 1_000:.1f}K"
-    return str(n)
-
 
 def build_settings(
     page: ft.Page, state: AppState, db: Database | None = None,
-    on_language_changed: callable = None,
+    on_language_changed: callable = None, on_mode_changed: callable = None,
+    on_theme_changed: callable = None,
 ) -> ft.Container:
-    """View/adjust crop profile, UI language, check API-key status, and see
-    estimated LLM token usage/cost (from the local llm_usage ledger — the
-    regular API key can't query Anthropic billing).
+    """View/adjust crop profile, UI language, LLM dosing mode, check
+    API-key status, and see estimated LLM token usage/cost (from the local
+    llm_usage ledger — the regular API key can't query Anthropic billing).
 
     `on_language_changed`, if given, is called after the language is saved so
     the caller can refresh the nav rail / currently visible view (see
-    app.app.main)."""
+    app.app.main). `on_mode_changed` is called after llm_mode is saved so
+    the caller can sync the app bar's lock/bolt badge (same state, second
+    place it's shown — see app.app.main's mode_setter). `on_theme_changed`
+    receives "light"/"dark" and is expected to repaint the window (colors
+    are baked into controls at build time — see app.app.main's
+    set_theme_mode)."""
 
-    feedback = ft.Text("", size=12, color="#2E7D32")
+    feedback = ft.Text("", size=theme.FONT_SM, color=theme.SUCCESS)
     profile_dropdown = ft.Dropdown(label=t("settings.crop_profile", state.language), width=260)
 
     def refresh_dropdown():
@@ -45,8 +40,8 @@ def build_settings(
         ]
 
     # -- create-new-profile dialog -------------------------------------------
-    name_field = ft.TextField(label="Profile name", autofocus=True, width=280)
-    dialog_error = ft.Text("", size=12, color="#C62828")
+    name_field = ft.TextField(label=t("settings.profile_name", state.language), autofocus=True, width=280)
+    dialog_error = ft.Text("", size=theme.FONT_SM, color=theme.DANGER)
 
     def close_dialog():
         dialog.open = False
@@ -73,22 +68,21 @@ def build_settings(
 
     dialog = ft.AlertDialog(
         modal=True,
-        title=ft.Text("New crop profile"),
+        title=ft.Text(t("settings.new_profile", state.language)),
         content=ft.Column(
             tight=True,
             controls=[
                 name_field,
                 dialog_error,
                 ft.Text(
-                    "Starts with generic EC/pH/Temperature/Humidity ranges — "
-                    "adjust them on the Parameters page after creating.",
-                    size=11, color="#757575",
+                    t("settings.new_profile_hint", state.language),
+                    size=theme.FONT_XS, color=theme.TEXT_SECONDARY,
                 ),
             ],
         ),
         actions=[
-            ft.TextButton("Cancel", on_click=lambda e: close_dialog()),
-            ft.FilledButton("Create", on_click=confirm_create),
+            ft.TextButton(t("common.cancel", state.language), on_click=lambda e: close_dialog()),
+            ft.FilledButton(t("common.create", state.language), on_click=confirm_create),
         ],
     )
 
@@ -116,7 +110,7 @@ def build_settings(
     refresh_dropdown()
 
     # -- delete-profile confirm dialog ---------------------------------------
-    delete_error = ft.Text("", size=12, color="#C62828")
+    delete_error = ft.Text("", size=theme.FONT_SM, color=theme.DANGER)
 
     def close_delete_dialog():
         delete_dialog.open = False
@@ -140,23 +134,22 @@ def build_settings(
 
     delete_dialog = ft.AlertDialog(
         modal=True,
-        title=ft.Text("Delete profile?"),
+        title=ft.Text(t("settings.delete_profile_q", state.language)),
         content=ft.Column(
             tight=True,
             controls=[
                 ft.Text(
-                    "This permanently deletes the profile and its saved "
-                    "setpoints. This can't be undone.",
-                    size=12,
+                    t("settings.delete_profile_body", state.language),
+                    size=theme.FONT_SM,
                 ),
                 delete_error,
             ],
         ),
         actions=[
-            ft.TextButton("Cancel", on_click=lambda e: close_delete_dialog()),
+            ft.TextButton(t("common.cancel", state.language), on_click=lambda e: close_delete_dialog()),
             ft.FilledButton(
-                "Delete", on_click=confirm_delete,
-                style=ft.ButtonStyle(bgcolor="#C62828", color="#FFFFFF"),
+                t("common.delete", state.language), on_click=confirm_delete,
+                style=ft.ButtonStyle(bgcolor=theme.DANGER, color="#FFFFFF"),
             ),
         ],
     )
@@ -167,8 +160,8 @@ def build_settings(
         page.show_dialog(delete_dialog)
 
     delete_btn = ft.IconButton(
-        ft.Icons.DELETE_OUTLINE, icon_color="#C62828",
-        tooltip="Delete this profile",
+        ft.Icons.DELETE_OUTLINE, icon_color=theme.DANGER,
+        tooltip=t("settings.delete_profile_tip", state.language),
         on_click=open_delete_dialog,
         # Greyed out on the permanent fallback profile rather than opening a
         # dialog that could only ever refuse. Kept in sync by on_profile_change.
@@ -192,72 +185,99 @@ def build_settings(
         width=260,
     )
 
+    # -- appearance -----------------------------------------------------------
+    # Dark mode exists for the greenhouse at night: a full-screen white kiosk
+    # is blinding in the dark and ruins night vision around the tanks.
+    def on_theme_change(e):
+        new_mode = "dark" if e.control.value else "light"
+        if on_theme_changed is not None:
+            # Repaints (and persists) the whole window; this view is rebuilt
+            # as part of that, so there's nothing to update here afterwards.
+            on_theme_changed(new_mode)
+        else:  # standalone preview without a host to repaint
+            state.theme_mode = new_mode
+            state.save()
+
+    theme_switch = ft.Switch(value=state.theme_mode == "dark", on_change=on_theme_change)
+    theme_label_text = ft.Text(
+        t("settings.theme_dark" if state.theme_mode == "dark" else "settings.theme_light",
+          state.language),
+        size=theme.FONT_SM, weight=ft.FontWeight.W_600, color=theme.TEXT,
+    )
+
+    # -- LLM dosing mode --------------------------------------------------------
+    # Same state.llm_mode the app bar's lock/bolt badge and the Telegram
+    # mode button toggle — this is a third view onto one shared switch.
+    def _mode_label(mode: str) -> str:
+        return t("settings.mode_auto" if mode == "auto" else "settings.mode_approval",
+                  state.language)
+
+    mode_switch = ft.Switch(value=state.llm_mode == "auto")
+    mode_label_text = ft.Text(_mode_label(state.llm_mode), size=theme.FONT_SM,
+                               weight=ft.FontWeight.W_600, color=theme.TEXT)
+
+    def _apply_mode_toggle():
+        new_mode = state.toggle_llm_mode()
+        state.save()
+        mode_switch.value = new_mode == "auto"
+        mode_label_text.value = _mode_label(new_mode)
+        mode_switch.update()
+        mode_label_text.update()
+        if on_mode_changed is not None:
+            on_mode_changed()
+
+    def _cancel_mode_dialog(e):
+        mode_confirm_dialog.open = False
+        # Switch already flipped visually on tap — snap it back since the
+        # change was cancelled.
+        mode_switch.value = state.llm_mode == "auto"
+        page.update()
+
+    def _confirm_mode_dialog(e):
+        mode_confirm_dialog.open = False
+        page.update()
+        _apply_mode_toggle()
+
+    mode_confirm_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text(t("mode.enable_title", state.language)),
+        content=ft.Text(t("mode.enable_body", state.language)),
+        actions=[
+            ft.TextButton(t("common.cancel", state.language), on_click=_cancel_mode_dialog),
+            ft.FilledButton(
+                t("mode.enable_confirm", state.language), on_click=_confirm_mode_dialog,
+                style=ft.ButtonStyle(bgcolor="#F57F17", color="#FFFFFF"),
+            ),
+        ],
+    )
+
+    def on_mode_switch(e):
+        if state.llm_mode == "approval":
+            # Turning ON auto-dose — confirm first, this is the direction
+            # that can fire a pump with nobody watching.
+            page.show_dialog(mode_confirm_dialog)
+        else:
+            _apply_mode_toggle()
+
+    mode_switch.on_change = on_mode_switch
+
     # -- API key status -----------------------------------------------------
     has_key = bool(os.environ.get("ANTHROPIC_API_KEY"))
     key_status = ft.Row(
         controls=[
             ft.Icon(
                 ft.Icons.CHECK_CIRCLE if has_key else ft.Icons.ERROR,
-                color="#2E7D32" if has_key else "#C62828",
+                color=theme.SUCCESS if has_key else "#C62828",
                 size=18,
             ),
             ft.Text(
                 "ANTHROPIC_API_KEY found" if has_key
                 else "ANTHROPIC_API_KEY missing — add it to .env",
-                size=12,
-                color="#2E7D32" if has_key else "#C62828",
+                size=theme.FONT_SM,
+                color=theme.SUCCESS if has_key else "#C62828",
             ),
         ]
     )
-
-    # -- LLM usage & estimated cost ------------------------------------------
-
-    def usage_rows() -> list[ft.Control]:
-        if db is None:
-            return [ft.Text("Usage log unavailable.", size=12, color=theme.TEXT_MUTED)]
-        summary = db.llm_usage_summary()
-
-        def period_row(label: str, rows: list[dict]) -> ft.Row:
-            calls = sum(r["calls"] for r in rows)
-            inp = sum(r["input"] for r in rows)
-            out = sum(r["output"] for r in rows)
-            cost = sum(
-                llm_agent.estimate_cost_usd(r["model"], r["input"], r["output"])
-                for r in rows
-            )
-            return ft.Row(
-                controls=[
-                    ft.Text(label, size=12, weight=ft.FontWeight.W_600,
-                            color=theme.TEXT, width=90),
-                    ft.Text(f"{calls} calls", size=12,
-                            color=theme.TEXT_SECONDARY, width=70),
-                    ft.Text(f"in {_fmt_tokens(inp)} / out {_fmt_tokens(out)} tok",
-                            size=12, color=theme.TEXT_SECONDARY, expand=True),
-                    ft.Text(f"~${cost:.2f}" if cost >= 0.005 else "<$0.01",
-                            size=12, weight=ft.FontWeight.W_600,
-                            color=theme.PRIMARY_DARK),
-                ],
-            )
-
-        controls: list[ft.Control] = [
-            period_row("Today", summary["today"]),
-            period_row("This month", summary["month"]),
-            period_row("All time", summary["all"]),
-        ]
-        if summary["all"]:
-            model_bits = []
-            for r in summary["all"]:
-                cost = llm_agent.estimate_cost_usd(r["model"], r["input"], r["output"])
-                label = _MODEL_LABELS.get(r["model"], r["model"])
-                model_bits.append(f"{label}: {r['calls']} calls · ~${cost:.2f}")
-            controls.append(ft.Text("  ·  ".join(model_bits), size=11,
-                                    color=theme.TEXT_MUTED))
-        controls.append(ft.Text(
-            "Estimated from this app's local log only. Remaining credit and "
-            "exact billing: console.anthropic.com → Billing.",
-            size=11, color=theme.TEXT_MUTED,
-        ))
-        return controls
 
     def card(title: str, *content: ft.Control) -> ft.Control:
         return theme.card(
@@ -279,15 +299,28 @@ def build_settings(
                     t("settings.subtitle", state.language),
                 ),
                 card(t("settings.language", state.language), language_dropdown),
+                card(t("settings.appearance", state.language),
+                     ft.Row(
+                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                         controls=[theme_switch, theme_label_text],
+                     ),
+                     ft.Text(t("settings.theme_hint", state.language),
+                             size=theme.FONT_XS, color=theme.TEXT_MUTED)),
+                card(t("settings.llm_mode", state.language),
+                     ft.Row(
+                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                         controls=[mode_switch, mode_label_text],
+                     ),
+                     ft.Text(t("settings.mode_hint", state.language),
+                             size=theme.FONT_SM, color=theme.TEXT_MUTED)),
                 card(t("settings.crop_profile", state.language),
                      ft.Row(
                          vertical_alignment=ft.CrossAxisAlignment.CENTER,
                          controls=[profile_dropdown, delete_btn],
                      ),
                      ft.Text(t("settings.profile_hint", state.language),
-                             size=12, color=theme.TEXT_MUTED)),
+                             size=theme.FONT_SM, color=theme.TEXT_MUTED)),
                 card(t("settings.llm_connection", state.language), key_status),
-                card("LLM usage & cost (estimated)", *usage_rows()),
                 feedback,
             ],
         ),
