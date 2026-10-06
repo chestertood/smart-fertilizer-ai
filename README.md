@@ -1,10 +1,21 @@
-# 🌱 Smart Fertilizer — AI-Assisted Hydroponic Control
+<p align="center">
+  <img src="docs/logo.png" alt="Adaptive Fertilizer Dosing logo" width="120">
+</p>
+
+<h1 align="center">Adaptive Fertilizer Dosing</h1>
+
+<p align="center">
+  <b>AI-assisted hydroponic control</b> — watch EC and pH live, let Claude propose the dose, approve it with one tap.
+</p>
+
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.12-blue">
+  <img alt="Flet" src="https://img.shields.io/badge/flet-0.85.1-informational">
+  <img alt="Claude" src="https://img.shields.io/badge/AI-Claude-d97757">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Raspberry%20Pi%20%7C%20Windows%20%7C%20Linux-lightgrey">
+</p>
 
 A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](https://flet.dev) and powered by Claude for AI-assisted dosing decisions. Designed to run on a Raspberry Pi with real sensors and dosing pumps, and to fall back to full simulation on any dev machine — no hardware required to build or demo.
-
-![Python](https://img.shields.io/badge/python-3.12-blue)
-![Flet](https://img.shields.io/badge/flet-0.85.1-informational)
-![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20%7C%20Windows%20%7C%20Linux-lightgrey)
 
 ## Demo
 
