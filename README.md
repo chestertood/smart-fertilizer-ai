@@ -8,9 +8,21 @@ A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](
 
 ## Demo
 
-![Walkthrough of Dashboard, Parameters, History, Settings and the chat assistant (simulated sensors)](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" alt="Walkthrough of the Dashboard, Parameters, History and Settings pages and the AI chat panel" width="860">
+  <br>
+  <sub>A quick tour of every menu — recorded on a dev machine with simulated sensors, so no hardware is needed to try it.</sub>
+</p>
 
-*Dashboard → Parameters (setpoints, growth stages, auto-dose rules, manual dosing, calibration) → History → Settings (dark mode) → AI chat panel. Recorded with simulated sensors.*
+| | Page | What you'll see |
+|:-:|---|---|
+| 📊 | **Dashboard** | Live EC / pH / temperature / humidity cards with Normal / Warning / Too High status colors, plus tank capacity |
+| 🎛️ | **Parameters** | Setpoints, growth stages, auto-dose rules, manual dosing and calibration — one tab each |
+| 📈 | **History** | Sensor trend charts (1 h / 6 h / 24 h / 7 d) and the dosing event log, manual vs. AI |
+| ⚙️ | **Settings** | Language (English / ไทย), light/dark theme, approval mode and crop profile |
+| 💬 | **Chat assistant** | Floating Claude panel on every page — proposals always arrive as approve-first cards |
+
+> **Try it yourself:** `pip install -r requirements.txt` then `python main.py` (desktop window), or `FLET_VIEW=web python main.py` and open <http://localhost:8550>.
 
 ## Overview
 
