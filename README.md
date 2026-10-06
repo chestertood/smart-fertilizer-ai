@@ -6,6 +6,12 @@ A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](
 ![Flet](https://img.shields.io/badge/flet-0.85.1-informational)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20%7C%20Windows%20%7C%20Linux-lightgrey)
 
+## Demo
+
+![Walkthrough of Dashboard, Parameters, History, Settings and the chat assistant (simulated sensors)](docs/demo.gif)
+
+*Dashboard → Parameters (setpoints, growth stages, auto-dose rules, manual dosing, calibration) → History → Settings (dark mode) → AI chat panel. Recorded with simulated sensors.*
+
 ## Overview
 
 The app monitors EC, pH, temperature, and humidity in real time, and helps decide how to dose nutrients and pH adjusters — either **manually** by the operator, or via **Claude-recommended actions that require human approval** before anything runs. Every dose (manual or AI-suggested) is clamped to safe limits and logged, and the whole thing is navigable from a single touchscreen-friendly side rail.
