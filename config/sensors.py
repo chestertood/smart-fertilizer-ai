@@ -14,7 +14,7 @@ SENSORS = [
         "min": 0.0,
         "max": 500.0,   # Atlas EZO-EC circuit: 0.07–500,000 µS/cm
         "abs_max": 500.0,
-        "icon": ft.Icons.ELECTRIC_BOLT,
+        "icon": ft.Icons.WATER_DROP,
         "color": "#2196F3",
     },
     {
@@ -24,7 +24,7 @@ SENSORS = [
         "min": 0.0,
         "max": 14.0,    # Atlas EZO-pH circuit: 0.001–14.000 pH
         "abs_max": 14.0,
-        "icon": ft.Icons.SCIENCE,
+        "icon": ft.Icons.WATER_DROP,
         "color": "#9C27B0",
     },
     {
@@ -48,6 +48,35 @@ SENSORS = [
         "color": "#009688",
     },
 ]
+
+
+# Label badge above the water-drop icon per sensor — Material has dedicated
+# glyphs for these (humidity_percentage, water_ph) but flet doesn't expose
+# them, so we fake it: small text tucked above-left of the drop.
+_DROP_LABELS = {"EC": "EC", "PH": "PH", "Humidity": "%"}
+
+
+def sensor_icon(sensor: dict, size: int = 18) -> ft.Control:
+    """Icon control for a sensor tile. sensor_card.py and parameters.py both
+    render sensor icons and should look the same."""
+    icon = ft.Icon(sensor["icon"], color="#FFFFFF", size=size)
+    label = _DROP_LABELS.get(sensor["name"])
+    if label is None:
+        return icon
+    return ft.Column(
+        spacing=-2,
+        tight=True,
+        horizontal_alignment=ft.CrossAxisAlignment.START,
+        controls=[
+            ft.Container(
+                padding=ft.Padding(left=size * 0.05, right=0, top=0, bottom=0),
+                content=ft.Text(
+                    label, size=size * 0.42, weight=ft.FontWeight.BOLD, color="#FFFFFF"
+                ),
+            ),
+            icon,
+        ],
+    )
 
 
 def get_status(value: float, min_val: float, max_val: float) -> tuple[str, str]:

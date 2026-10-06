@@ -4,14 +4,13 @@ A profile maps each sensor name to its desired {min, max}. These reuse the
 same shape as config.sensors.SENSORS so get_status() works unchanged.
 """
 
+import copy
 from datetime import date
 
 from config import store
 
 # Single shared default target range — every profile uses this same band.
 # No per-crop split: one set of setpoints for all profiles.
-import copy as _copy
-
 DEFAULT_TARGETS: dict[str, dict[str, float]] = {
     "EC":          {"min": 0.5, "max": 4.0},
     "PH":          {"min": 5.0, "max": 7.5},
@@ -20,15 +19,15 @@ DEFAULT_TARGETS: dict[str, dict[str, float]] = {
 }
 
 # Generic starting ranges for a brand-new custom profile.
-_GENERIC_DEFAULTS = _copy.deepcopy(DEFAULT_TARGETS)
+_GENERIC_DEFAULTS = copy.deepcopy(DEFAULT_TARGETS)
 
 
 # name -> {sensor -> (min, max)}. All profiles seeded from the same defaults.
 CROP_PROFILES: dict[str, dict[str, dict[str, float]]] = {
-    "Default":           _copy.deepcopy(DEFAULT_TARGETS),
-    "Leafy Greens":      _copy.deepcopy(DEFAULT_TARGETS),
-    "Fruiting (Tomato)": _copy.deepcopy(DEFAULT_TARGETS),
-    "Herbs":             _copy.deepcopy(DEFAULT_TARGETS),
+    "Default":           copy.deepcopy(DEFAULT_TARGETS),
+    "Leafy Greens":      copy.deepcopy(DEFAULT_TARGETS),
+    "Fruiting (Tomato)": copy.deepcopy(DEFAULT_TARGETS),
+    "Herbs":             copy.deepcopy(DEFAULT_TARGETS),
 }
 
 # Permanent fallback profile: always present and never deletable, so the app
@@ -67,12 +66,25 @@ class AppState:
         self.growth: dict = cfg.get("growth", {})
         # UI language: "en" or "th" (see config.i18n.t()).
         self.language: str = cfg.get("language", "en")
+        # UI palette: "light" (default) or "dark" — see app.theme.apply().
+        # A greenhouse kiosk at night is the case dark mode exists for.
+        self.theme_mode: str = cfg.get("theme_mode", "light")
         # Claude model for the chat assistant (see llm_agent.AVAILABLE_MODELS).
-        self.llm_model: str = cfg.get("llm_model", "claude-opus-4-8")
+        self.llm_model: str = cfg.get("llm_model", "claude-sonnet-5")
+        # "approval" (default) or "auto" — whether an LLM-proposed dosing
+        # action needs an operator tap or dispenses immediately. Only
+        # dosing is affected: config changes (targets/rules/stages/
+        # calibration) always need approval regardless of this, since a
+        # bad guess there is much harder to notice than a wrong dose is.
+        # Shared across the app and the Telegram bridge (one AppState).
+        self.llm_mode: str = cfg.get("llm_mode", "approval")
         # Last sensor snapshot, kept fresh by the poll loop so any view (and
         # the LLM advisor) can read current values without its own polling.
         # Not persisted.
         self.last_readings: dict = {}
+        # Monotonic timestamp of that snapshot (time.monotonic()), for
+        # staleness checks (e.g. Telegram's "Check status" card). 0.0 means
+        # no reading has landed yet.
 
     @property
     def profile_names(self) -> list[str]:
@@ -88,7 +100,6 @@ class AppState:
     def create_profile(self, name: str) -> bool:
         """Create a new custom crop profile seeded with generic defaults and
         make it active. Returns False if the name is blank or already taken."""
-        import copy
         name = (name or "").strip()
         if not name or name in self.profile_names:
             return False
@@ -125,7 +136,6 @@ class AppState:
             return info["stage"]["targets"]
         if self.active_profile not in self._targets:
             # Profile missing from saved config — seed from the defaults.
-            import copy
             self._targets[self.active_profile] = copy.deepcopy(
                 CROP_PROFILES.get(self.active_profile, {})
             )
@@ -144,7 +154,6 @@ class AppState:
     def add_stage(self, name: str, duration_days: int) -> None:
         """Append a new growth stage to the active profile, seeded with that
         profile's current flat target ranges (edit them individually after)."""
-        import copy
         g = self.growth_config()
         base = (
             self._targets.get(self.active_profile)
@@ -193,6 +202,110 @@ class AppState:
             g["stages"].pop(index)
             return True
         return False
+
+    # Sensor/pump names and rule operators the LLM tools may reference —
+    # must match config.sensors.SENSORS, app.services.actuators
+    # (_PUMP_CONFIG) and app.views.parameters._OPS respectively.
+    _SENSOR_NAMES = ("EC", "PH", "Temperature", "Humidity")
+    _RULE_OPS = ("<", ">")
+    _PUMP_NAMES = ("Nutrient A", "Nutrient B", "pH Up", "pH Down", "Water")
+
+    def set_auto_rules(self, rules: list[dict]) -> int:
+        """Replace the whole auto-dose rule list with a proposed one —
+        entries of {"sensor", "op", "threshold", "pump", "amount",
+        "enabled"}. Replaces rather than appends, so a chat proposal that
+        edits or drops a rule (by simply not repeating it) takes effect
+        instead of stacking duplicates alongside the old list. Malformed
+        entries are skipped; returns how many rules were set. Leaves the
+        existing list untouched if none are usable."""
+        valid = []
+        for r in rules:
+            sensor = r.get("sensor")
+            op = r.get("op")
+            pump = r.get("pump")
+            if sensor not in self._SENSOR_NAMES or op not in self._RULE_OPS \
+                    or pump not in self._PUMP_NAMES:
+                continue
+            try:
+                threshold = float(r["threshold"])
+                amount = float(r["amount"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if amount <= 0:
+                continue
+            valid.append({
+                "sensor": sensor, "op": op, "threshold": threshold,
+                "pump": pump, "amount": amount,
+                "enabled": bool(r.get("enabled", True)),
+            })
+        if not valid:
+            return 0
+        self.auto_rules[:] = valid
+        return len(valid)
+
+    def apply_calibration(self, data: dict) -> list[str]:
+        """Apply a partial calibration proposal — {"pumps": {name:
+        {"max_dose"?, "ml_per_s"?}}, "offsets": {sensor: value},
+        "water_tank": {"width_cm"?, "length_cm"?, "height_cm"?}}, any subset
+        present. Unlike set_auto_rules/set_stages this merges rather than
+        replaces: calibration is independent scalar settings, not a list,
+        so a proposal that only mentions one pump must leave the rest of
+        the rig untouched. Malformed/unknown entries are skipped. Returns
+        the list of human-readable fields actually changed, e.g.
+        ["Nutrient A max dose", "EC offset"]."""
+        applied = []
+        for name, cfg in (data.get("pumps") or {}).items():
+            if name not in self._PUMP_NAMES or not isinstance(cfg, dict):
+                continue
+            current = self.pumps.setdefault(
+                name, {"max_dose": 60.0, "ml_per_s": 1.0}
+            )
+            if "max_dose" in cfg:
+                try:
+                    val = float(cfg["max_dose"])
+                except (TypeError, ValueError):
+                    val = None
+                if val is not None and val > 0:
+                    current["max_dose"] = val
+                    applied.append(f"{name} max dose")
+            if "ml_per_s" in cfg:
+                try:
+                    val = float(cfg["ml_per_s"])
+                except (TypeError, ValueError):
+                    val = None
+                if val is not None and val > 0:
+                    current["ml_per_s"] = val
+                    applied.append(f"{name} ml/s")
+
+        for sensor, value in (data.get("offsets") or {}).items():
+            if sensor not in self._SENSOR_NAMES:
+                continue
+            try:
+                self.offsets[sensor] = float(value)
+            except (TypeError, ValueError):
+                continue
+            applied.append(f"{sensor} offset")
+
+        tank = data.get("water_tank") or {}
+        for dim in ("width_cm", "length_cm", "height_cm"):
+            if dim not in tank:
+                continue
+            try:
+                val = float(tank[dim])
+            except (TypeError, ValueError):
+                continue
+            if val > 0:
+                self.water_tank[dim] = val
+                applied.append(f"tank {dim.replace('_cm', '')}")
+
+        return applied
+
+    def toggle_llm_mode(self) -> str:
+        """Flip between "approval" and "auto" (see llm_mode above). Does
+        not save — caller's responsibility, same as every other setter
+        here. Returns the new mode."""
+        self.llm_mode = "auto" if self.llm_mode == "approval" else "approval"
+        return self.llm_mode
 
     def start_planting(self, date_str: str | None = None) -> None:
         """Begin (or restart) growth tracking for the active profile from
@@ -256,7 +369,6 @@ class AppState:
 
     def reset_targets_to_default(self) -> None:
         """Restore the active profile's setpoints to the hardcoded defaults."""
-        import copy
         self._targets[self.active_profile] = copy.deepcopy(
             CROP_PROFILES.get(self.active_profile, {})
         )
@@ -274,6 +386,8 @@ class AppState:
                 "water_tank": self.water_tank,
                 "growth": self.growth,
                 "language": self.language,
+                "theme_mode": self.theme_mode,
                 "llm_model": self.llm_model,
+                "llm_mode": self.llm_mode,
             }
         )

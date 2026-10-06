@@ -76,6 +76,19 @@ def _out_of_range_minutes(points: list[tuple[datetime, float]],
     return over / 60.0, under / 60.0
 
 
+def _nearest_index(points: list[tuple[datetime, float]], local_x: float,
+                   width: float) -> int:
+    """Index of the sample nearest the touched x, for the chart crosshair.
+    `local_x` is in canvas coordinates, `width` the full canvas width."""
+    t0, t1 = points[0][0], points[-1][0]
+    t_span = (t1 - t0).total_seconds() or 1.0
+    plot_w = max(1.0, width - _PAD_L - _PAD_R)
+    frac = (local_x - _PAD_L) / plot_w
+    target = t0 + timedelta(seconds=frac * t_span)
+    return min(range(len(points)),
+               key=lambda j: abs((points[j][0] - target).total_seconds()))
+
+
 def _time_label(dt: datetime, hours: int) -> str:
     local = dt.astimezone()
     return local.strftime("%d %b %H:%M") if hours > 24 else local.strftime("%H:%M")
@@ -95,7 +108,7 @@ def build_history(db: Database, state: AppState) -> ft.Container:
                      hours: int) -> ft.Control:
         title = ft.Text(
             t(f"sensor.name.{sensor_name}", lang),
-            size=13, weight=ft.FontWeight.W_600, color=color,
+            size=theme.FONT_SM, weight=ft.FontWeight.W_600, color=color,
         )
         if len(points) < 2:
             return theme.card(
@@ -105,7 +118,7 @@ def build_history(db: Database, state: AppState) -> ft.Container:
                     ft.Container(
                         height=_CHART_H, alignment=ft.Alignment.CENTER,
                         content=ft.Text(t("history.empty_chart", lang),
-                                        size=12, color=theme.TEXT_MUTED),
+                                        size=theme.FONT_SM, color=theme.TEXT_MUTED),
                     ),
                 ]),
             )
@@ -131,13 +144,16 @@ def build_history(db: Database, state: AppState) -> ft.Container:
         t0, t1 = pts[0][0], pts[-1][0]
         t_span = (t1 - t0).total_seconds() or 1.0
 
-        label_style = ft.TextStyle(size=10, color=theme.TEXT_MUTED)
+        label_style = ft.TextStyle(size=theme.FONT_XS, color=theme.TEXT_MUTED)
         # Limit lines read as thresholds: dashed red, slightly translucent so
         # the data line stays the loudest mark on the chart.
         limit_color = ft.Colors.with_opacity(0.65, theme.DANGER)
         limit_label_style = ft.TextStyle(
-            size=10, color=theme.DANGER, weight=ft.FontWeight.W_600,
+            size=theme.FONT_XS, color=theme.DANGER, weight=ft.FontWeight.W_600,
         )
+
+        # Index of the sample the operator last tapped/dragged to, or None.
+        cursor: dict[str, int | None] = {"i": None}
 
         def build_shapes(w: float, h: float) -> list[cv.Shape]:
             plot_w = max(1.0, w - _PAD_L - _PAD_R)
@@ -196,6 +212,36 @@ def build_history(db: Database, state: AppState) -> ft.Container:
                 anti_alias=True,
             )))
 
+            # Crosshair: the chart has no hover on a touch screen, so the
+            # operator taps (or drags along) the plot to read an exact value
+            # off the line instead of eyeballing it against the axis.
+            i = cursor["i"]
+            if i is not None and 0 <= i < len(pts):
+                cdt, cval = pts[i]
+                cx, cy = x_at(cdt), y_at(cval)
+                shapes.append(cv.Line(
+                    cx, _PAD_T, cx, _PAD_T + plot_h,
+                    paint=ft.Paint(color=ft.Colors.with_opacity(0.55, color),
+                                   stroke_width=1,
+                                   style=ft.PaintingStyle.STROKE,
+                                   stroke_dash_pattern=[3, 3]),
+                ))
+                shapes.append(cv.Circle(
+                    cx, cy, 4,
+                    paint=ft.Paint(color=color, style=ft.PaintingStyle.FILL),
+                ))
+                # Flip the readout to the other side near the right edge so
+                # it never runs off the canvas.
+                right_half = cx > _PAD_L + plot_w / 2
+                shapes.append(cv.Text(
+                    x=cx + (-8 if right_half else 8), y=_PAD_T,
+                    value=f"{fmt.format(cval)}  {_time_label(cdt, hours)}",
+                    style=ft.TextStyle(size=theme.FONT_XS, color=color,
+                                       weight=ft.FontWeight.BOLD),
+                    alignment=(ft.Alignment.TOP_RIGHT if right_half
+                               else ft.Alignment.TOP_LEFT),
+                ))
+
             # Time ticks: start / middle / end.
             mid = t0 + timedelta(seconds=t_span / 2)
             for dt, align in ((t0, ft.Alignment.TOP_LEFT),
@@ -210,38 +256,64 @@ def build_history(db: Database, state: AppState) -> ft.Container:
 
         canvas = cv.Canvas(height=_CHART_H, expand=True,
                            shapes=[], resize_interval=100)
+        # Canvas only reports its size through on_resize, and the crosshair
+        # needs it again on every tap — so keep the last one.
+        size = {"w": 0.0, "h": float(_CHART_H)}
 
-        def on_resize(e: cv.CanvasResizeEvent):
-            canvas.shapes = build_shapes(e.width, e.height)
+        def render() -> None:
+            if size["w"] <= 0:
+                return
+            canvas.shapes = build_shapes(size["w"], size["h"])
             canvas.update()
 
+        def on_resize(e: cv.CanvasResizeEvent):
+            size["w"], size["h"] = e.width, e.height
+            render()
+
         canvas.on_resize = on_resize
+
+        def inspect(local_x: float) -> None:
+            """Move the crosshair to the sample nearest the touched x."""
+            nearest = _nearest_index(pts, local_x, size["w"])
+            if cursor["i"] != nearest:
+                cursor["i"] = nearest
+                render()
+
+        chart_area = ft.GestureDetector(
+            content=canvas,
+            # Flet 0.85 events carry an Offset, not flat local_x/local_y.
+            on_tap_down=lambda e: inspect(e.local_position.x),
+            on_pan_update=lambda e: inspect(e.local_position.x),  # drag to scrub
+        )
 
         # Footer: latest value + how long the sensor sat outside the band.
         footer_bits: list[ft.Control] = [
             ft.Text(
                 f"now {fmt.format(values[-1])}  ·  "
                 f"min {fmt.format(data_lo)} / max {fmt.format(data_hi)}",
-                size=11, color=theme.TEXT_MUTED, expand=True,
+                size=theme.FONT_XS, color=theme.TEXT_MUTED, expand=True,
             ),
         ]
         if tgt:
             over_min, under_min = _out_of_range_minutes(raw, t_lo, t_hi)
             if over_min >= 1:
-                footer_bits.append(ft.Text(f"▲ over {over_min:.0f} min",
-                                           size=11, color=theme.DANGER))
+                footer_bits.append(ft.Text(
+                    t("history.over", lang).format(min=over_min),
+                    size=theme.FONT_XS, color=theme.DANGER))
             if under_min >= 1:
-                footer_bits.append(ft.Text(f"▼ under {under_min:.0f} min",
-                                           size=11, color=theme.WARNING))
+                footer_bits.append(ft.Text(
+                    t("history.under", lang).format(min=under_min),
+                    size=theme.FONT_XS, color=theme.WARNING))
             if over_min < 1 and under_min < 1:
-                footer_bits.append(ft.Text("in range", size=11,
+                footer_bits.append(ft.Text(t("history.in_range", lang),
+                                           size=theme.FONT_XS,
                                            color=theme.SUCCESS))
 
         return theme.card(
             col={"xs": 12, "md": 6},
             content=ft.Column(
                 spacing=4,
-                controls=[title, canvas, ft.Row(controls=footer_bits)],
+                controls=[title, chart_area, ft.Row(controls=footer_bits)],
             ),
         )
 
@@ -279,42 +351,77 @@ def build_history(db: Database, state: AppState) -> ft.Container:
         e.control.page.update()
 
     tf_selector = ft.SegmentedButton(
-        segments=[ft.Segment(value=k, label=ft.Text(lbl, size=12))
+        segments=[ft.Segment(value=k, label=ft.Text(lbl, size=theme.FONT_SM, weight=ft.FontWeight.W_600))
                   for k, lbl, _h in _TIMEFRAMES],
         selected=[timeframe[0]],
         on_change=on_timeframe,
         allow_multiple_selection=False,
         allow_empty_selection=False,
+        show_selected_icon=False,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=20),
+            padding=ft.Padding(left=14, right=14, top=8, bottom=8),
+            side={
+                ft.ControlState.DEFAULT: ft.BorderSide(1, theme.BORDER),
+                ft.ControlState.SELECTED: ft.BorderSide(1, theme.PRIMARY),
+            },
+            bgcolor={
+                ft.ControlState.DEFAULT: theme.SURFACE,
+                ft.ControlState.SELECTED: theme.PRIMARY,
+            },
+            color={
+                ft.ControlState.DEFAULT: theme.TEXT_MUTED,
+                ft.ControlState.SELECTED: "#FFFFFF",
+            },
+        ),
     )
 
-    # ---- dosing log (unchanged) ----------------------------------------------
+    # ---- dosing log ------------------------------------------------------------
+
+    def dose_row(d: dict, last: bool) -> ft.Control:
+        is_llm = d["source"] == "llm"
+        color = "#7E57C2" if is_llm else "#1976D2"
+        badge_content = (
+            ft.Text("AI", size=theme.FONT_XS, weight=ft.FontWeight.BOLD, color=color)
+            if is_llm else ft.Icon(ft.Icons.PERSON, size=14, color=color)
+        )
+        tip = t("history.dose_ai", lang) if is_llm else t("history.dose_manual", lang)
+        dt = _parse_ts(d["ts"])
+        ts_label = dt.astimezone().strftime("%d %b %H:%M") if dt else d["ts"].replace("T", " ")
+        return ft.Container(
+            padding=ft.Padding(left=2, right=2, top=7, bottom=7),
+            border=None if last else ft.Border(bottom=ft.BorderSide(1, theme.BORDER)),
+            content=ft.Row(
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=10,
+                controls=[
+                    ft.Container(
+                        width=26, height=26, border_radius=13,
+                        bgcolor=ft.Colors.with_opacity(0.12, color),
+                        alignment=ft.Alignment.CENTER,
+                        tooltip=tip,
+                        content=badge_content,
+                    ),
+                    ft.Text(f"{d['pump']}", size=theme.FONT_SM, weight=ft.FontWeight.W_600,
+                            color=theme.TEXT, expand=True),
+                    ft.Text(f"{d['amount']:.1f} ml", size=theme.FONT_SM,
+                            weight=ft.FontWeight.W_600, color=theme.PRIMARY),
+                    ft.Text(ts_label, size=theme.FONT_XS, color=theme.TEXT_MUTED),
+                ],
+            ),
+        )
 
     doses = db.recent_doses(limit=30)
     if doses:
-        dose_items = [
-            ft.Row(
-                controls=[
-                    ft.Icon(
-                        ft.Icons.SMART_TOY if d["source"] == "llm" else ft.Icons.PAN_TOOL,
-                        size=16,
-                        color="#7E57C2" if d["source"] == "llm" else "#1976D2",
-                    ),
-                    ft.Text(f"{d['pump']}", size=12, weight=ft.FontWeight.W_600,
-                            color=theme.TEXT, expand=True),
-                    ft.Text(f"{d['amount']:.1f} ml", size=12, color="#1976D2"),
-                    ft.Text(d["ts"].replace("T", " "), size=11, color=theme.TEXT_MUTED),
-                ],
-            )
-            for d in doses
-        ]
+        dose_items = [dose_row(d, i == len(doses) - 1) for i, d in enumerate(doses)]
     else:
         dose_items = [
-            ft.Text(t("history.no_doses", lang), size=12, color=theme.TEXT_MUTED)
+            ft.Text(t("history.no_doses", lang), size=theme.FONT_SM, color=theme.TEXT_MUTED)
         ]
 
     dose_log = theme.card(
         ft.Column(
-            spacing=8,
+            spacing=4,
             controls=[
                 theme.section_title(t("history.doses_title", lang)),
                 *dose_items,

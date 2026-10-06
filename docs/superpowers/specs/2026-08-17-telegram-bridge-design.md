@@ -19,10 +19,16 @@ In scope:
 - Allowlist by numeric Telegram user ID — unrecognized senders are
   silently ignored.
 
+**Superseded 2026-08-18:** the "approving proposals from Telegram" item
+below was reversed — proposals are now approvable inline from Telegram
+(`PendingProposals`, inline Approve/Reject buttons). See
+`[[telegram-approval-plan-pending]]` for the reversal design; original
+v1 text kept as the historical record of the decision it replaced.
+
 Out of scope (deferred, not designed here):
-- Approving parameter/growth/dosing proposals from Telegram. If Claude
+- ~~Approving parameter/growth/dosing proposals from Telegram. If Claude
   proposes a change, the reply says so and points the operator back to the
-  app. See `[[telegram-bridge-planned]]`.
+  app.~~ Reversed — see note above.
 - Group chats. Bot works in DM only; inviting it to a group is unsupported
   for v1 (privacy-mode + "who can see replies" concerns deferred).
 - Proactive/background alerts (e.g. EC out of range) pushed without being

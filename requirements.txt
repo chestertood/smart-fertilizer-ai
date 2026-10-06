@@ -18,6 +18,10 @@ flet==0.85.1
 flet-web==0.85.1
 fastapi>=0.139.0
 starlette>=1.3.1
+# flet-web starts uvicorn with ws="websockets-sansio", which uvicorn added in
+# 0.35. On 0.34.x the serve task dies with KeyError('websockets-sansio') in the
+# background — no traceback, no listening port, just "Flet app has started...".
+uvicorn>=0.35
 
 # Anthropic Claude API (LLM advisor)
 anthropic

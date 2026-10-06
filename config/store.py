@@ -60,7 +60,7 @@ def _defaults() -> dict:
         "language": "en",
         # Claude model used by the chat assistant / advisor. Selectable from
         # the chat panel; must be one of llm_agent.AVAILABLE_MODELS.
-        "llm_model": "claude-opus-4-8",
+        "llm_model": "claude-sonnet-5",
     }
 
 

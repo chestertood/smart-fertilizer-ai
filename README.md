@@ -6,6 +6,24 @@ A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](
 ![Flet](https://img.shields.io/badge/flet-0.85.1-informational)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%20%7C%20Windows%20%7C%20Linux-lightgrey)
 
+## Demo
+
+<p align="center">
+  <img src="docs/demo.gif" alt="Walkthrough of the Dashboard, Parameters, History and Settings pages and the AI chat panel" width="860">
+  <br>
+  <sub>A quick tour of every menu — recorded on a dev machine with simulated sensors, so no hardware is needed to try it.</sub>
+</p>
+
+| | Page | What you'll see |
+|:-:|---|---|
+| 📊 | **Dashboard** | Live EC / pH / temperature / humidity cards with Normal / Warning / Too High status colors, plus tank capacity |
+| 🎛️ | **Parameters** | Setpoints, growth stages, auto-dose rules, manual dosing and calibration — one tab each |
+| 📈 | **History** | Sensor trend charts (1 h / 6 h / 24 h / 7 d) and the dosing event log, manual vs. AI |
+| ⚙️ | **Settings** | Language (English / ไทย), light/dark theme, approval mode and crop profile |
+| 💬 | **Chat assistant** | Floating Claude panel on every page — proposals always arrive as approve-first cards |
+
+> **Try it yourself:** `pip install -r requirements.txt` then `python main.py` (desktop window), or `FLET_VIEW=web python main.py` and open <http://localhost:8550>.
+
 ## Overview
 
 The app monitors EC, pH, temperature, and humidity in real time, and helps decide how to dose nutrients and pH adjusters — either **manually** by the operator, or via **Claude-recommended actions that require human approval** before anything runs. Every dose (manual or AI-suggested) is clamped to safe limits and logged, and the whole thing is navigable from a single touchscreen-friendly side rail.
@@ -63,7 +81,7 @@ Every physical I/O path (`Sensor`, `Actuator`) has a real implementation *and* a
 
 Supported real hardware:
 - **Atlas Scientific EZO-EC / EZO-pH** over I2C
-- **DHT22** temperature + humidity sensor
+- **SenseCAP CO2/Temperature/Humidity (S-CO2-02B)** over RS485 Modbus RTU via a USB-RS485 adapter
 - **GPIO relay-driven** peristaltic dosing pumps
 
 ## Getting Started
@@ -97,14 +115,14 @@ FLET_VIEW=web python main.py
 
 ### On a Raspberry Pi
 
-Uncomment the hardware section in `requirements.txt` (`smbus2`, `adafruit-circuitpython-dht`, `adafruit-blinka`, `gpiozero`) and install. The app will automatically use real sensors/pumps instead of simulation.
+Uncomment the hardware section in `requirements.txt` (`minimalmodbus`, `gpiozero`) and install. The app will automatically use real sensors/pumps instead of simulation.
 
 ## Tech Stack
 
 - **UI:** [Flet](https://flet.dev) (Flutter-backed Python UI framework)
 - **AI:** [Anthropic Claude](https://www.anthropic.com) via structured tool-use
 - **Storage:** SQLite (sensor history + dosing events), JSON (user config)
-- **Hardware:** I2C (Atlas Scientific EZO), GPIO (relays), DHT22
+- **Hardware:** RS485 Modbus RTU (EC/pH probes, SenseCAP CO2/temp/humidity), GPIO (relays)
 
 ## Roadmap
 

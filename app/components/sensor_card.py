@@ -2,7 +2,13 @@ import flet as ft
 
 from app import theme
 from config.i18n import t, t_status
-from config.sensors import get_status
+from config.sensors import get_status, sensor_icon
+
+
+# A single dropped Modbus frame shouldn't flash "No signal" on the card, so
+# a reading is only called stale after this many consecutive failed polls
+# (hub.read_all() returns NaN per failed sensor). Poll is 2s -> ~4s to show.
+_STALE_AFTER_FAILS = 2
 
 
 def _bar_fraction(value: float, lo: float, hi: float) -> float:
@@ -31,7 +37,7 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
     progress = _bar_fraction(value, lo, hi)
 
     status_text = ft.Text(
-        t_status(label, lang), size=11, color=badge_fg, weight=ft.FontWeight.BOLD
+        t_status(label, lang), size=theme.FONT_XS, color=badge_fg, weight=ft.FontWeight.BOLD
     )
     status_badge = ft.Container(
         bgcolor=badge_bg,
@@ -40,20 +46,29 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
         content=status_text,
     )
     value_text = ft.Text(
-        f"{value:.1f}", size=36, weight=ft.FontWeight.BOLD, color=badge_fg
+        f"{value:.1f}", size=theme.FONT_XXL, weight=ft.FontWeight.BOLD, color=badge_fg
+    )
+    # Reserved width for the big number: Roboto's digits aren't fixed-width,
+    # so "8.8" -> "10.1" re-flowed the row on every poll and the unit label
+    # beside it visibly jittered. Flet 0.85's TextStyle has no font_features,
+    # so tabular figures aren't available — a fixed box is the stable fix.
+    # ponytail: 104px fits "100.0" at size 32; a 4-digit reading would clip.
+    value_box = ft.Container(
+        width=104, alignment=ft.Alignment.CENTER_LEFT, content=value_text
     )
     progress_bar = ft.ProgressBar(
-        value=progress, color=s_color, bgcolor="#ECEFEC", height=8, border_radius=4
+        value=progress, color=s_color, bgcolor=theme.BORDER, height=8, border_radius=4
     )
     range_text = ft.Text(
         f"{t('sensor.target', lang)} {lo}–{hi} {sensor['unit']}",
-        size=11, color=theme.TEXT_MUTED,
+        size=theme.FONT_XS, color=theme.TEXT_MUTED,
     )
 
     container = theme.card(
         col={"xs": 12, "sm": 6},
+        padding=12,
         content=ft.Column(
-            spacing=10,
+            spacing=8,
             tight=True,
             controls=[
                 ft.Row(
@@ -62,13 +77,15 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
                     controls=[
                         ft.Container(
                             bgcolor=sensor["color"],
-                            border_radius=10,
-                            padding=8,
-                            content=ft.Icon(sensor["icon"], color="#FFFFFF", size=22),
+                            border_radius=8,
+                            width=40,
+                            height=40,
+                            alignment=ft.Alignment.CENTER,
+                            content=sensor_icon(sensor, size=22),
                         ),
                         ft.Text(
                             t(f"sensor.name.{sensor['name']}", lang),
-                            size=14,
+                            size=theme.FONT_MD,
                             weight=ft.FontWeight.W_600,
                             color=theme.TEXT,
                             expand=True,
@@ -80,25 +97,43 @@ def sensor_card(sensor: dict, target: dict | None = None, lang: str = "en"):
                     vertical_alignment=ft.CrossAxisAlignment.END,
                     spacing=4,
                     controls=[
-                        value_text,
-                        ft.Text(sensor["unit"], size=13, color=theme.TEXT_MUTED),
+                        value_box,
+                        ft.Text(sensor["unit"], size=theme.FONT_SM, color=theme.TEXT_MUTED),
                     ],
                 ),
                 progress_bar,
                 ft.Row(
                     controls=[
-                        ft.Text(str(lo), size=11, color=theme.TEXT_MUTED),
+                        ft.Text(str(lo), size=theme.FONT_XS, color=theme.TEXT_MUTED),
                         ft.Container(expand=True),
                         range_text,
                         ft.Container(expand=True),
-                        ft.Text(str(hi), size=11, color=theme.TEXT_MUTED),
+                        ft.Text(str(hi), size=theme.FONT_XS, color=theme.TEXT_MUTED),
                     ],
                 ),
             ],
         ),
     )
 
+    fails = 0
+
     def update(new_value: float) -> None:
+        """Called every poll with the latest reading. NaN means the sensor
+        read failed: the last number stays on screen but goes grey with a
+        "No signal" badge, so a frozen value can't be mistaken for a live
+        one. A good reading clears the state immediately."""
+        nonlocal fails
+        if new_value != new_value:  # NaN
+            fails += 1
+            if fails >= _STALE_AFTER_FAILS:
+                value_text.color = theme.TEXT_MUTED
+                status_text.value = t("sensor.no_signal", lang)
+                status_text.color = theme.TEXT_SECONDARY
+                status_badge.bgcolor = theme.NEUTRAL_BG
+                progress_bar.color = theme.TEXT_MUTED
+                container.update()
+            return
+        fails = 0
         new_label, new_color = get_status(new_value, lo, hi)
         new_bg, new_fg = theme.status_style(new_color)
         value_text.value = f"{new_value:.1f}"
