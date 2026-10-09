@@ -33,6 +33,14 @@ A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](
 | ⚙️ | **Settings** | Language (English / ไทย), light/dark theme, approval mode and crop profile |
 | 💬 | **Chat assistant** | Floating Claude panel on every page — proposals always arrive as approve-first cards |
 
+### Telegram bot
+
+<p align="center">
+  <img src="assets/telegram_chat_demo.gif" alt="Telegram chat with the bot: status cards, dosing recommendation, and an approve-first grow plan, in English and Thai" width="380">
+  <br>
+  <sub>Same assistant, off-device — status checks, dosing recommendations and approve-first proposals over Telegram, in English or ไทย.</sub>
+</p>
+
 > **Try it yourself:** `pip install -r requirements.txt` then `python main.py` (desktop window), or `FLET_VIEW=web python main.py` and open <http://localhost:8550>.
 
 ## Overview
