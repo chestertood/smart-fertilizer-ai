@@ -16,6 +16,18 @@ Nothing in the app depends on the working directory — every path (`.env`, the
 database, the crop seed, assets) resolves from its own file location. So a
 launcher only has to name `main.py` by absolute path.
 
+## Raspberry Pi: deploying changes
+
+- `deploy_to_pi.bat` — full deploy (all project files, rebuild venv, reinstall
+  `requirements.txt`, refresh the autostart entry). Excludes `data/` so it
+  never overwrites the Pi's own DB/config. Use after editing dependencies, or
+  for the first-ever deploy.
+- `deploy_code_to_pi.bat` — fast path for everyday code edits. Pushes only
+  `app/`, `config/`, `main.py`, `assets/`, `knowledge/crops_seed.json`. No
+  venv rebuild, no pip install. Restart the app on the Pi afterwards
+  (`pkill -f 'python.*main.py'`, then autostart or a manual relaunch brings it
+  back).
+
 ## Raspberry Pi: start at boot
 
 Copy the project to the Pi, `pip install -r requirements.txt`, then:
@@ -29,6 +41,15 @@ sudo reboot
 That's the whole thing — the `.desktop` file just runs `python3 main.py`. If
 the project lives somewhere other than `/home/pi/LLM_fertilizer`, edit the
 `Exec=` line to match.
+
+## Ubuntu/Debian: system-wide Thai font
+
+The app bundles Sarabun, so this is only needed for other apps on the machine
+(or if Thai still shows as boxes). Per-user, no sudo, offline:
+
+```bash
+bash scripts/install_sarabun.sh
+```
 
 ## Windows
 

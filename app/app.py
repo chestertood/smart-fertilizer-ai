@@ -13,6 +13,7 @@ from app.components.nav_rail import build_nav_rail, set_nav_language, NAV_NAMES
 from app.components.chat_widget import build_chat_widget
 from app.views.dashboard import build_dashboard
 from app.views.history import build_history
+from app.views.library_view import build_library
 from app.views.parameters import build_parameters
 from app.views.settings_view import build_settings
 from app.services import telegram_bridge
@@ -49,7 +50,7 @@ def check_internet() -> bool:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "Smart Fertilizer Dosing"
+    page.title = "Adaptive Fertilizer Dosing"
     page.update()
     page.bgcolor = theme.BG
     page.padding = 0
@@ -57,10 +58,15 @@ def main(page: ft.Page) -> None:
     page.theme_mode = ft.ThemeMode.LIGHT
     # Seed Material widgets (buttons, text fields, switches, dialogs) from the
     # brand green so built-in controls match the hand-styled cards.
-    page.theme = ft.Theme(color_scheme_seed=theme.PRIMARY)
-    # Pixel font for the app-bar title, matching the pixel-art logo. Bundled
-    # locally (OFL) so it still works offline on the Pi.
-    page.fonts = {"PixelFont": "fonts/PressStart2P-Regular.ttf"}
+    # Sarabun (Latin + Thai) is the app-wide font: Flutter on Linux only falls
+    # back to system fonts, and a Pi without a Thai font shows tofu boxes.
+    page.theme = ft.Theme(color_scheme_seed=theme.PRIMARY, font_family="Sarabun")
+    # Pixel font for the app-bar title, matching the pixel-art logo. Both fonts
+    # are bundled locally (OFL) so they work offline on the Pi.
+    page.fonts = {
+        "PixelFont": "fonts/PressStart2P-Regular.ttf",
+        "Sarabun": "fonts/Sarabun-Regular.ttf",
+    }
 
     if os.environ.get("FLET_VIEW") != "web":
         page.window.width = 1280
@@ -199,6 +205,7 @@ def main(page: ft.Page) -> None:
         "Dashboard": build_dash,
         "Parameters": lambda: build_parameters(page, actuator_hub, db, state),
         "History": lambda: build_history(db, state),
+        "Library": lambda: build_library(page, state),
         "Settings": lambda: build_settings(
             page, state, db, on_language_changed=refresh_language,
             on_mode_changed=sync_mode_badge,
