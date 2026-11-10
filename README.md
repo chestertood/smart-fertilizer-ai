@@ -41,6 +41,14 @@ A desktop/touchscreen control app for hydroponic fertigation, built with [Flet](
   <sub>Same assistant, off-device — status checks, dosing recommendations and approve-first proposals over Telegram, in English or ไทย.</sub>
 </p>
 
+### On real hardware
+
+<p align="center">
+  <img src="assets/fully_device.jpg" alt="Raspberry Pi touchscreen in a 3D-printed enclosure running the dashboard, beside a laptop chatting with the Telegram bot, with the EC/pH probe in a sample cup" width="760">
+  <br>
+  <sub>The full setup: Raspberry Pi 5 + touchscreen in a printed enclosure running the dashboard (left), EC/pH probes in a sample cup, and the same assistant reachable from Telegram (right).</sub>
+</p>
+
 > **Try it yourself:** `pip install -r requirements.txt` then `python main.py` (desktop window), or `FLET_VIEW=web python main.py` and open <http://localhost:8550>.
 
 ## Overview
